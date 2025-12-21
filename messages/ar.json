@@ -1,0 +1,92 @@
+{
+  "common": {
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "success": "نجاح",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "create": "إنشاء",
+    "submit": "إرسال",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "search": "بحث",
+    "filter": "تصفية",
+    "all": "الكل"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "dashboard": "لوحة التحكم",
+    "login": "تسجيل الدخول",
+    "register": "التسجيل",
+    "logout": "تسجيل الخروج",
+    "createAd": "إنشاء إعلان"
+  },
+  "home": {
+    "title": "اكتشف المنتجات والخدمات",
+    "subtitle": "استكشف منتجات وخدمات رائعة من جميع أنحاء العالم",
+    "noAds": "لا توجد إعلانات متاحة في الوقت الحالي.",
+    "createFirstAd": "أنشئ إعلانك الأول",
+    "loadingAds": "جاري تحميل الإعلانات..."
+  },
+  "auth": {
+    "signIn": "تسجيل الدخول إلى Yubbox",
+    "signUp": "إنشاء حساب Yubbox الخاص بك",
+    "email": "عنوان البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "name": "الاسم الكامل",
+    "signInButton": "تسجيل الدخول",
+    "signUpButton": "إنشاء حساب",
+    "alreadyHaveAccount": "أو إنشاء حساب جديد",
+    "dontHaveAccount": "أو تسجيل الدخول إلى حسابك الموجود",
+    "forgotPassword": "نسيت كلمة المرور؟"
+  },
+  "ad": {
+    "title": "اسم المنتج/الخدمة",
+    "description": "الوصف",
+    "imageUrl": "رابط الصورة",
+    "webLink": "رابط الويب",
+    "targetCountries": "الدول المستهدفة",
+    "createAd": "إنشاء إعلان جديد",
+    "editAd": "تعديل الإعلان",
+    "updateAd": "تحديث الإعلان",
+    "deleteAd": "حذف الإعلان",
+    "myAds": "Yubbox الخاص بي",
+    "manageAds": "إدارة إعلاناتك وتتبع الأداء",
+    "noAdsYet": "لم تقم بإنشاء أي إعلانات بعد.",
+    "visitWebsite": "زيارة الموقع",
+    "targetCountriesLabel": "الدول المستهدفة:",
+    "reviews": "المراجعات",
+    "writeReview": "كتابة مراجعة",
+    "rating": "التقييم",
+    "comment": "تعليق (اختياري)",
+    "submitReview": "إرسال المراجعة",
+    "signInToReview": "يرجى تسجيل الدخول لكتابة مراجعة.",
+    "averageRating": "متوسط التقييم"
+  },
+  "country": {
+    "allCountries": "جميع البلدان",
+    "selectCountry": "اختر البلد",
+    "searchCountries": "البحث عن البلدان...",
+    "noCountriesFound": "لم يتم العثور على بلدان"
+  },
+  "validation": {
+    "required": "هذا الحقل مطلوب",
+    "emailInvalid": "يرجى تقديم بريد إلكتروني صالح",
+    "passwordMinLength": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
+    "passwordsDoNotMatch": "كلمات المرور غير متطابقة",
+    "selectAtLeastOneCountry": "يرجى اختيار بلد واحد على الأقل"
+  },
+  "errors": {
+    "failedToLoad": "فشل التحميل",
+    "failedToSave": "فشل الحفظ",
+    "failedToDelete": "فشل الحذف",
+    "unauthorized": "غير مصرح",
+    "notFound": "غير موجود",
+    "serverError": "حدث خطأ في الخادم"
+  }
+}
+

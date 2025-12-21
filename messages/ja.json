@@ -1,0 +1,92 @@
+{
+  "common": {
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "create": "作成",
+    "submit": "送信",
+    "back": "戻る",
+    "next": "次へ",
+    "previous": "前へ",
+    "search": "検索",
+    "filter": "フィルター",
+    "all": "すべて"
+  },
+  "nav": {
+    "home": "ホーム",
+    "dashboard": "ダッシュボード",
+    "login": "ログイン",
+    "register": "登録",
+    "logout": "ログアウト",
+    "createAd": "広告を作成"
+  },
+  "home": {
+    "title": "製品とサービスを発見",
+    "subtitle": "世界中の素晴らしい製品とサービスを探索",
+    "noAds": "現在利用可能な広告はありません。",
+    "createFirstAd": "最初の広告を作成",
+    "loadingAds": "広告を読み込み中..."
+  },
+  "auth": {
+    "signIn": "Yubboxにログイン",
+    "signUp": "Yubboxアカウントを作成",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "confirmPassword": "パスワード確認",
+    "name": "フルネーム",
+    "signInButton": "ログイン",
+    "signUpButton": "アカウント作成",
+    "alreadyHaveAccount": "または新しいアカウントを作成",
+    "dontHaveAccount": "または既存のアカウントにログイン",
+    "forgotPassword": "パスワードをお忘れですか？"
+  },
+  "ad": {
+    "title": "製品/サービス名",
+    "description": "説明",
+    "imageUrl": "画像URL",
+    "webLink": "ウェブリンク",
+    "targetCountries": "対象国",
+    "createAd": "新しい広告を作成",
+    "editAd": "広告を編集",
+    "updateAd": "広告を更新",
+    "deleteAd": "広告を削除",
+    "myAds": "マイYubbox",
+    "manageAds": "広告を管理し、パフォーマンスを追跡",
+    "noAdsYet": "まだ広告を作成していません。",
+    "visitWebsite": "ウェブサイトを訪問",
+    "targetCountriesLabel": "対象国：",
+    "reviews": "レビュー",
+    "writeReview": "レビューを書く",
+    "rating": "評価",
+    "comment": "コメント（オプション）",
+    "submitReview": "レビューを送信",
+    "signInToReview": "レビューを書くにはログインしてください。",
+    "averageRating": "平均評価"
+  },
+  "country": {
+    "allCountries": "すべての国",
+    "selectCountry": "国を選択",
+    "searchCountries": "国を検索...",
+    "noCountriesFound": "国が見つかりません"
+  },
+  "validation": {
+    "required": "このフィールドは必須です",
+    "emailInvalid": "有効なメールアドレスを入力してください",
+    "passwordMinLength": "パスワードは6文字以上である必要があります",
+    "passwordsDoNotMatch": "パスワードが一致しません",
+    "selectAtLeastOneCountry": "少なくとも1つの国を選択してください"
+  },
+  "errors": {
+    "failedToLoad": "読み込みに失敗しました",
+    "failedToSave": "保存に失敗しました",
+    "failedToDelete": "削除に失敗しました",
+    "unauthorized": "認証されていません",
+    "notFound": "見つかりません",
+    "serverError": "サーバーエラーが発生しました"
+  }
+}
+

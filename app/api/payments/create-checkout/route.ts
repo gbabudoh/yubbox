@@ -1,0 +1,122 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/nextauth';
+import dbConnect from '@/lib/dbConnect';
+import Ad from '@/models/Ad';
+import Payment from '@/models/Payment';
+import { stripe, AD_PRICE, AD_DURATION_DAYS, CURRENCY, dollarsToCents } from '@/lib/stripe';
+
+/**
+ * Create Stripe Checkout Session for ad payment
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user?.id) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    await dbConnect();
+
+    const body = await request.json();
+    const { adId, isRelist = false } = body;
+
+    if (!adId) {
+      return NextResponse.json(
+        { success: false, error: 'Ad ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Find the ad
+    const ad = await Ad.findById(adId);
+
+    if (!ad) {
+      return NextResponse.json(
+        { success: false, error: 'Ad not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if user owns the ad
+    if (ad.userId.toString() !== session.user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
+
+    // Calculate expiry date (30 days from payment)
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + AD_DURATION_DAYS);
+    expiryDate.setHours(23, 59, 59, 999);
+
+    // Create pending payment record
+    const payment = await Payment.create({
+      adId: ad._id,
+      userId: session.user.id,
+      amount: AD_PRICE,
+      currency: 'USD',
+      status: 'pending',
+      paymentMethod: 'stripe',
+      expiryDate,
+    });
+
+    // Create Stripe Checkout Session
+    const checkoutSession = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: CURRENCY,
+            product_data: {
+              name: isRelist ? `Relist Yubbox: ${ad.title}` : `Yubbox Listing: ${ad.title}`,
+              description: isRelist 
+                ? 'Relist your Yubbox for 30 days' 
+                : 'Activate your Yubbox listing for 30 days',
+            },
+            unit_amount: dollarsToCents(AD_PRICE),
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/payment/cancel?adId=${adId}`,
+      client_reference_id: payment._id.toString(),
+      metadata: {
+        adId: ad._id.toString(),
+        userId: session.user.id,
+        paymentId: payment._id.toString(),
+        isRelist: isRelist.toString(),
+      },
+    });
+
+    // Update payment with Stripe session ID
+    payment.transactionId = checkoutSession.id;
+    await payment.save();
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        sessionId: checkoutSession.id,
+        url: checkoutSession.url,
+        paymentId: payment._id,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error creating checkout session:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || 'Failed to create checkout session',
+      },
+      { status: 500 }
+    );
+  }
+}
+

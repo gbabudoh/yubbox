@@ -1,0 +1,92 @@
+{
+  "common": {
+    "loading": "Laden...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "submit": "Absenden",
+    "back": "Zurück",
+    "next": "Weiter",
+    "previous": "Vorherige",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "all": "Alle"
+  },
+  "nav": {
+    "home": "Startseite",
+    "dashboard": "Dashboard",
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "logout": "Abmelden",
+    "createAd": "Anzeige Erstellen"
+  },
+  "home": {
+    "title": "Produkte und Dienstleistungen Entdecken",
+    "subtitle": "Entdecken Sie erstaunliche Produkte und Dienstleistungen aus der ganzen Welt",
+    "noAds": "Derzeit sind keine Anzeigen verfügbar.",
+    "createFirstAd": "Erstellen Sie Ihre Erste Anzeige",
+    "loadingAds": "Anzeigen werden geladen..."
+  },
+  "auth": {
+    "signIn": "Bei Yubbox anmelden",
+    "signUp": "Erstellen Sie Ihr Yubbox-Konto",
+    "email": "E-Mail-Adresse",
+    "password": "Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "name": "Vollständiger Name",
+    "signInButton": "Anmelden",
+    "signUpButton": "Konto erstellen",
+    "alreadyHaveAccount": "Oder ein neues Konto erstellen",
+    "dontHaveAccount": "Oder bei Ihrem bestehenden Konto anmelden",
+    "forgotPassword": "Passwort vergessen?"
+  },
+  "ad": {
+    "title": "Produkt-/Dienstleistungsname",
+    "description": "Beschreibung",
+    "imageUrl": "Bild-URL",
+    "webLink": "Web-Link",
+    "targetCountries": "Zielländer",
+    "createAd": "Neue Anzeige Erstellen",
+    "editAd": "Anzeige Bearbeiten",
+    "updateAd": "Anzeige Aktualisieren",
+    "deleteAd": "Anzeige Löschen",
+    "myAds": "Mein Yubbox",
+    "manageAds": "Verwalten Sie Ihre Anzeigen und verfolgen Sie die Leistung",
+    "noAdsYet": "Sie haben noch keine Anzeigen erstellt.",
+    "visitWebsite": "Website Besuchen",
+    "targetCountriesLabel": "Zielländer:",
+    "reviews": "Bewertungen",
+    "writeReview": "Bewertung Schreiben",
+    "rating": "Bewertung",
+    "comment": "Kommentar (optional)",
+    "submitReview": "Bewertung Absenden",
+    "signInToReview": "Bitte melden Sie sich an, um eine Bewertung zu schreiben.",
+    "averageRating": "Durchschnittliche Bewertung"
+  },
+  "country": {
+    "allCountries": "Alle Länder",
+    "selectCountry": "Land Auswählen",
+    "searchCountries": "Länder suchen...",
+    "noCountriesFound": "Keine Länder gefunden"
+  },
+  "validation": {
+    "required": "Dieses Feld ist erforderlich",
+    "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse an",
+    "passwordMinLength": "Das Passwort muss mindestens 6 Zeichen lang sein",
+    "passwordsDoNotMatch": "Die Passwörter stimmen nicht überein",
+    "selectAtLeastOneCountry": "Bitte wählen Sie mindestens ein Land aus"
+  },
+  "errors": {
+    "failedToLoad": "Laden fehlgeschlagen",
+    "failedToSave": "Speichern fehlgeschlagen",
+    "failedToDelete": "Löschen fehlgeschlagen",
+    "unauthorized": "Nicht autorisiert",
+    "notFound": "Nicht gefunden",
+    "serverError": "Ein Serverfehler ist aufgetreten"
+  }
+}
+

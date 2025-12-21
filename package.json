@@ -6,12 +6,31 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "make-admin": "node scripts/makeAdmin.js",
+    "create-super-admin": "node scripts/createSuperAdmin.js",
+    "create-admin": "node scripts/createAdmin.js",
+    "create-sample-banners": "node scripts/createSampleBanners.js"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^8.4.0",
+    "@types/bcryptjs": "^2.4.6",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.3",
+    "framer-motion": "^12.23.26",
+    "i18n": "^0.15.3",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.562.0",
+    "minio": "^8.0.6",
+    "mongoose": "^8.19.4",
     "next": "16.0.3",
+    "next-auth": "^4.24.13",
+    "next-intl": "^4.5.3",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "recharts": "^3.4.1",
+    "stripe": "^19.3.1",
+    "swiper": "^12.0.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

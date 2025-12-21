@@ -1,0 +1,92 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "submit": "Soumettre",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "all": "Tous"
+  },
+  "nav": {
+    "home": "Accueil",
+    "dashboard": "Tableau de bord",
+    "login": "Se connecter",
+    "register": "S'inscrire",
+    "logout": "Se déconnecter",
+    "createAd": "Créer une Annonce"
+  },
+  "home": {
+    "title": "Découvrir des Produits et Services",
+    "subtitle": "Explorez des produits et services incroyables du monde entier",
+    "noAds": "Aucune annonce disponible pour le moment.",
+    "createFirstAd": "Créer votre Première Annonce",
+    "loadingAds": "Chargement des annonces..."
+  },
+  "auth": {
+    "signIn": "Connectez-vous à Yubbox",
+    "signUp": "Créez votre compte Yubbox",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "name": "Nom complet",
+    "signInButton": "Se connecter",
+    "signUpButton": "Créer un compte",
+    "alreadyHaveAccount": "Ou créez un nouveau compte",
+    "dontHaveAccount": "Ou connectez-vous à votre compte existant",
+    "forgotPassword": "Mot de passe oublié ?"
+  },
+  "ad": {
+    "title": "Nom du Produit/Service",
+    "description": "Description",
+    "imageUrl": "URL de l'Image",
+    "webLink": "Lien Web",
+    "targetCountries": "Pays Cibles",
+    "createAd": "Créer une Nouvelle Annonce",
+    "editAd": "Modifier l'Annonce",
+    "updateAd": "Mettre à jour l'Annonce",
+    "deleteAd": "Supprimer l'Annonce",
+    "myAds": "Mon Yubbox",
+    "manageAds": "Gérez vos annonces et suivez les performances",
+    "noAdsYet": "Vous n'avez pas encore créé d'annonces.",
+    "visitWebsite": "Visiter le Site Web",
+    "targetCountriesLabel": "Pays Cibles :",
+    "reviews": "Avis",
+    "writeReview": "Écrire un Avis",
+    "rating": "Note",
+    "comment": "Commentaire (optionnel)",
+    "submitReview": "Soumettre l'Avis",
+    "signInToReview": "Veuillez vous connecter pour écrire un avis.",
+    "averageRating": "Note Moyenne"
+  },
+  "country": {
+    "allCountries": "Tous les Pays",
+    "selectCountry": "Sélectionner un Pays",
+    "searchCountries": "Rechercher des pays...",
+    "noCountriesFound": "Aucun pays trouvé"
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire",
+    "emailInvalid": "Veuillez fournir une adresse e-mail valide",
+    "passwordMinLength": "Le mot de passe doit contenir au moins 6 caractères",
+    "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
+    "selectAtLeastOneCountry": "Veuillez sélectionner au moins un pays"
+  },
+  "errors": {
+    "failedToLoad": "Échec du chargement",
+    "failedToSave": "Échec de l'enregistrement",
+    "failedToDelete": "Échec de la suppression",
+    "unauthorized": "Non autorisé",
+    "notFound": "Non trouvé",
+    "serverError": "Une erreur serveur s'est produite"
+  }
+}
+

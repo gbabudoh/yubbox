@@ -1,0 +1,92 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "submit": "Enviar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "all": "Todos"
+  },
+  "nav": {
+    "home": "Inicio",
+    "dashboard": "Panel",
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "logout": "Cerrar sesión",
+    "createAd": "Crear Anuncio"
+  },
+  "home": {
+    "title": "Descubre Productos y Servicios",
+    "subtitle": "Explora increíbles productos y servicios de todo el mundo",
+    "noAds": "No hay anuncios disponibles en este momento.",
+    "createFirstAd": "Crea tu Primer Anuncio",
+    "loadingAds": "Cargando anuncios..."
+  },
+  "auth": {
+    "signIn": "Inicia sesión en Yubbox",
+    "signUp": "Crea tu cuenta de Yubbox",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar Contraseña",
+    "name": "Nombre completo",
+    "signInButton": "Iniciar sesión",
+    "signUpButton": "Crear cuenta",
+    "alreadyHaveAccount": "O crea una cuenta nueva",
+    "dontHaveAccount": "O inicia sesión en tu cuenta existente",
+    "forgotPassword": "¿Olvidaste tu contraseña?"
+  },
+  "ad": {
+    "title": "Nombre del Producto/Servicio",
+    "description": "Descripción",
+    "imageUrl": "URL de la Imagen",
+    "webLink": "Enlace Web",
+    "targetCountries": "Países Objetivo",
+    "createAd": "Crear Nuevo Anuncio",
+    "editAd": "Editar Anuncio",
+    "updateAd": "Actualizar Anuncio",
+    "deleteAd": "Eliminar Anuncio",
+    "myAds": "Mi Yubbox",
+    "manageAds": "Administra tus anuncios y rastrea el rendimiento",
+    "noAdsYet": "Aún no has creado ningún anuncio.",
+    "visitWebsite": "Visitar Sitio Web",
+    "targetCountriesLabel": "Países Objetivo:",
+    "reviews": "Reseñas",
+    "writeReview": "Escribir una Reseña",
+    "rating": "Calificación",
+    "comment": "Comentario (opcional)",
+    "submitReview": "Enviar Reseña",
+    "signInToReview": "Por favor inicia sesión para escribir una reseña.",
+    "averageRating": "Calificación Promedio"
+  },
+  "country": {
+    "allCountries": "Todos los Países",
+    "selectCountry": "Seleccionar País",
+    "searchCountries": "Buscar países...",
+    "noCountriesFound": "No se encontraron países"
+  },
+  "validation": {
+    "required": "Este campo es obligatorio",
+    "emailInvalid": "Por favor proporciona un correo electrónico válido",
+    "passwordMinLength": "La contraseña debe tener al menos 6 caracteres",
+    "passwordsDoNotMatch": "Las contraseñas no coinciden",
+    "selectAtLeastOneCountry": "Por favor selecciona al menos un país"
+  },
+  "errors": {
+    "failedToLoad": "Error al cargar",
+    "failedToSave": "Error al guardar",
+    "failedToDelete": "Error al eliminar",
+    "unauthorized": "No autorizado",
+    "notFound": "No encontrado",
+    "serverError": "Ocurrió un error en el servidor"
+  }
+}
+
