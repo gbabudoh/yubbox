@@ -8,6 +8,7 @@ export interface PublicCategory {
   _id: string;
   name: string;
   slug: string;
+  type: 'product' | 'service';
   description?: string;
 }
 

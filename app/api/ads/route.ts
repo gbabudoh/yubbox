@@ -3,9 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth';
 import dbConnect from '@/lib/dbConnect';
 import Ad from '@/models/Ad';
-import Category from '@/models/Category';
-import Industry from '@/models/Industry';
-import ProductType from '@/models/ProductType';
 import mongoose from 'mongoose';
 
 export async function GET(request: NextRequest) {
@@ -17,7 +14,7 @@ export async function GET(request: NextRequest) {
     const isActive = searchParams.get('isActive');
     const country = searchParams.get('country'); // Filter by country code
 
-    let query: any = {};
+    const query: Record<string, unknown> = {};
 
     if (userId) {
       // Convert userId string to ObjectId for query
@@ -49,7 +46,7 @@ export async function GET(request: NextRequest) {
     try {
       ads = await Ad.find(query)
         .populate('userId', 'name email')
-        .populate('categoryId', 'name slug')
+        .populate('categoryId', 'name slug type')
         .populate('industryId', 'name slug')
         .populate('productTypeId', 'name slug type')
         .sort({ createdAt: -1 });
@@ -65,11 +62,12 @@ export async function GET(request: NextRequest) {
       success: true,
       data: ads,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch ads';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch ads',
+        error: message,
       },
       { status: 500 }
     );
@@ -139,7 +137,7 @@ export async function POST(request: NextRequest) {
     const initialExpiryDate = new Date();
     initialExpiryDate.setDate(initialExpiryDate.getDate() + 30);
 
-    const adData: any = {
+    const adData: Record<string, unknown> = {
       title,
       description,
       imageUrl,
@@ -167,7 +165,7 @@ export async function POST(request: NextRequest) {
         .populate('userId', 'name email')
         .populate('categoryId', 'name slug')
         .populate('industryId', 'name slug');
-    } catch (populateError) {
+    } catch {
       // If populate fails, use basic populate
       populatedAd = await Ad.findById(ad._id)
         .populate('userId', 'name email');
@@ -180,11 +178,12 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to create ad';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to create ad',
+        error: message,
       },
       { status: 500 }
     );

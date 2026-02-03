@@ -2,16 +2,33 @@
 
 import React, { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Input from './ui/Input';
 import Button from './ui/Button';
 import CountrySelector from './CountrySelector';
 import { useI18n } from '@/lib/i18n-context';
 import { IAd } from '@/types/models';
-import { publicService } from '@/services/publicService';
+import { publicService, PublicCategory, PublicIndustry } from '@/services/publicService';
 
 interface AdFormProps {
   initialData?: IAd;
   onSubmit: (data: FormData) => Promise<void>;
+}
+
+interface FormDataType {
+  title: string;
+  description: string;
+  imageUrl: string;
+  imageFile: File | null;
+  webLink: string;
+  countries: string[];
+  type: 'product' | 'service' | '';
+  productCategoryId: string;
+  serviceCategoryId: string;
+  industryId: string;
+  ownerName: string;
+  location: string;
+  companyName: string;
 }
 
 const AdForm: React.FC<AdFormProps> = ({ initialData, onSubmit }) => {
@@ -19,14 +36,14 @@ const AdForm: React.FC<AdFormProps> = ({ initialData, onSubmit }) => {
   const { t } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormDataType>({
     title: initialData?.title || '',
     description: initialData?.description || '',
     imageUrl: initialData?.imageUrl || '',
     imageFile: null as File | null,
     webLink: initialData?.webLink || '',
     countries: (initialData?.countries || initialData?.targetLocations || []) as string[],
-    type: (initialData?.categoryId as any)?.type || '',
+    type: (initialData?.categoryId as unknown as PublicCategory)?.type || '',
     productCategoryId: initialData?.categoryId ? String(initialData.categoryId) : '',
     serviceCategoryId: '',
     industryId: initialData?.industryId ? String(initialData.industryId) : '',
@@ -38,8 +55,8 @@ const AdForm: React.FC<AdFormProps> = ({ initialData, onSubmit }) => {
     initialData?.imageUrl || null
   );
   const [isUploading, setIsUploading] = useState(false);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [industries, setIndustries] = useState<any[]>([]);
+  const [categories, setCategories] = useState<PublicCategory[]>([]);
+  const [industries, setIndustries] = useState<PublicIndustry[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
 
   
@@ -101,9 +118,9 @@ const AdForm: React.FC<AdFormProps> = ({ initialData, onSubmit }) => {
         if (!formData.type) {
           newErrors.type = 'Type is required';
         }
-        // Validate either product or service category is selected
+        // Validate either product or service option is selected
         if (!formData.productCategoryId && !formData.serviceCategoryId) {
-          newErrors.category = 'Please select either a product category or a service category';
+          newErrors.category = 'Please select either a product option or a service option';
         }
         if (!formData.industryId) {
           newErrors.industryId = t('validation.industryRequired') || 'Industry is required';
@@ -243,9 +260,12 @@ const AdForm: React.FC<AdFormProps> = ({ initialData, onSubmit }) => {
         />
         {imagePreview && (
           <div className="mt-2">
-            <img
+            <Image
               src={imagePreview}
               alt="Preview"
+              width={500}
+              height={300}
+              unoptimized
               className="w-full h-48 object-cover rounded-lg border border-gray-200"
             />
           </div>
@@ -253,9 +273,12 @@ const AdForm: React.FC<AdFormProps> = ({ initialData, onSubmit }) => {
         {initialData?.imageUrl && !formData.imageFile && (
           <div className="mt-2">
             <p className="text-xs text-gray-500 mb-1">{t('ad.currentImage')}</p>
-            <img
+            <Image
               src={initialData.imageUrl}
               alt="Current"
+              width={500}
+              height={300}
+              unoptimized
               className="w-full h-48 object-cover rounded-lg border border-gray-200"
             />
           </div>
@@ -324,7 +347,7 @@ const AdForm: React.FC<AdFormProps> = ({ initialData, onSubmit }) => {
           onChange={(e) => {
             setFormData({ 
               ...formData, 
-              type: e.target.value, 
+              type: e.target.value as 'product' | 'service' | '', 
               productCategoryId: '', 
               serviceCategoryId: '' 
             });
@@ -344,66 +367,68 @@ const AdForm: React.FC<AdFormProps> = ({ initialData, onSubmit }) => {
       </div>
 
       {/* Product Category Selection */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Product Category <span className="text-gray-400">(optional)</span>
-        </label>
-        {loadingOptions ? (
-          <div className="text-sm text-gray-500">Loading categories...</div>
-        ) : (
-          <select
-            value={formData.productCategoryId}
-            onChange={(e) =>
-              setFormData({ ...formData, productCategoryId: e.target.value, serviceCategoryId: '' })
-            }
-            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.category ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
-            }`}
-            disabled={formData.type === 'service'}
-          >
-            <option value="">Select a product category</option>
-            {categories.filter((cat: any) => cat.type === 'product').map((category: any) => (
-              <option key={category._id} value={category._id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        )}
-        {errors.category && (
-          <p className="mt-1 text-sm text-red-600">{errors.category}</p>
-        )}
-      </div>
+      {(formData.type === 'product' || !formData.type) && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Product Option Selector <span className="text-red-500">*</span>
+          </label>
+          {loadingOptions ? (
+            <div className="text-sm text-gray-500">Loading options...</div>
+          ) : (
+            <select
+              value={formData.productCategoryId}
+              onChange={(e) =>
+                setFormData({ ...formData, productCategoryId: e.target.value, serviceCategoryId: '' })
+              }
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.category ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
+              }`}
+            >
+              <option value="">Select a product option</option>
+              {categories.filter((cat: PublicCategory) => cat.type === 'product').map((category: PublicCategory) => (
+                <option key={category._id} value={category._id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {errors.category && (
+            <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+          )}
+        </div>
+      )}
 
       {/* Service Category Selection */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Service Category <span className="text-gray-400">(optional)</span>
-        </label>
-        {loadingOptions ? (
-          <div className="text-sm text-gray-500">Loading categories...</div>
-        ) : (
-          <select
-            value={formData.serviceCategoryId}
-            onChange={(e) =>
-              setFormData({ ...formData, serviceCategoryId: e.target.value, productCategoryId: '' })
-            }
-            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.category ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
-            }`}
-            disabled={formData.type === 'product'}
-          >
-            <option value="">Select a service category</option>
-            {categories.filter((cat: any) => cat.type === 'service').map((category: any) => (
-              <option key={category._id} value={category._id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        )}
-        {errors.category && (
-          <p className="mt-1 text-sm text-red-600">{errors.category}</p>
-        )}
-      </div>
+      {(formData.type === 'service' || !formData.type) && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Service Option Selector <span className="text-red-500">*</span>
+          </label>
+          {loadingOptions ? (
+            <div className="text-sm text-gray-500">Loading options...</div>
+          ) : (
+            <select
+              value={formData.serviceCategoryId}
+              onChange={(e) =>
+                setFormData({ ...formData, serviceCategoryId: e.target.value, productCategoryId: '' })
+              }
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.category ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
+              }`}
+            >
+              <option value="">Select a service option</option>
+              {categories.filter((cat: PublicCategory) => cat.type === 'service').map((category: PublicCategory) => (
+                <option key={category._id} value={category._id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {errors.category && (
+            <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+          )}
+        </div>
+      )}
 
       {/* Industry Selection */}
       <div>
@@ -424,7 +449,7 @@ const AdForm: React.FC<AdFormProps> = ({ initialData, onSubmit }) => {
             required
           >
             <option value="">{t('ad.selectIndustry') || 'Select an industry'}</option>
-            {industries.map((industry) => (
+            {industries.map((industry: PublicIndustry) => (
               <option key={industry._id} value={industry._id}>
                 {industry.name}
               </option>

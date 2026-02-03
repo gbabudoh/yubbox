@@ -19,6 +19,7 @@ export interface IAd extends Document {
   expiryDate: Date; // Ad expires after 30 days from payment
   topLensExpiry?: Date;
   storiesExpiry?: Date;
+  yubboxCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -106,6 +107,10 @@ const AdSchema: Schema<IAd> = new Schema(
       type: Date,
       default: null,
     },
+    yubboxCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -123,6 +128,7 @@ AdSchema.index({ industryId: 1 });
 AdSchema.index({ productTypeId: 1 });
 AdSchema.index({ topLensExpiry: 1 });
 AdSchema.index({ storiesExpiry: 1 });
+AdSchema.index({ yubboxCount: -1 });
 
 const Ad: Model<IAd> = mongoose.models.Ad || mongoose.model<IAd>('Ad', AdSchema);
 

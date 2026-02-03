@@ -8,6 +8,7 @@ interface LogoProps {
   height?: number;
   width?: number;
   showText?: boolean;
+  disableLink?: boolean;
 }
 
 const Logo: React.FC<LogoProps> = ({
@@ -15,9 +16,10 @@ const Logo: React.FC<LogoProps> = ({
   height = 40,
   width = 40,
   showText = false,
+  disableLink = false,
 }) => {
-  return (
-    <Link href="/" className={cn('flex items-center gap-3', className)}>
+  const content = (
+    <div className={cn('flex items-center gap-3', className)}>
       <Image
         src="/logo.png"
         alt="Yubbox Logo"
@@ -30,8 +32,14 @@ const Logo: React.FC<LogoProps> = ({
       {showText && (
         <span className="text-2xl font-bold text-gray-900">Yubbox</span>
       )}
-    </Link>
+    </div>
   );
+
+  if (disableLink) {
+    return content;
+  }
+
+  return <Link href="/">{content}</Link>;
 };
 
 export default Logo;

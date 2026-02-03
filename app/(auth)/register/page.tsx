@@ -3,8 +3,8 @@
 import React, { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
+import { motion } from 'framer-motion';
+import { ArrowLeft, User, Mail, Lock, ShieldCheck } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { useI18n } from '@/lib/i18n-context';
 import { authService } from '@/services/authService';
@@ -58,23 +58,52 @@ export default function RegisterPage() {
       setIsLoading(false);
     }
   };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col relative overflow-y-auto">
+      {/* Top Slogan */}
+      <div className="w-full text-center py-2 px-4 shadow-sm z-20" style={{ backgroundColor: 'var(--primary-btn)' }}>
+        <h1 className="text-white font-medium text-sm md:text-base tracking-wide">
+          yubbox your product and services for global presence
+        </h1>
+      </div>
+
+      {/* Nav Section (Back Button) */}
+      <div className="w-full px-6 py-4 flex items-center z-20">
+        <Link 
+          href="/" 
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors group"
+        >
+          <div className="p-2 bg-white rounded-full shadow-sm group-hover:shadow-md transition-all">
+            <ArrowLeft className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
+          </div>
+          <span className="font-medium hidden sm:block">Back to Home</span>
+        </Link>
+      </div>
+
+      <div className="flex-1 flex items-center justify-center p-4 -mt-10">
+        <div className="max-w-md w-full my-8">
         {/* Card Container */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50"
+        >
           {/* Header */}
           <div className="text-center mb-8">
-            <Logo height={100} width={100} className="justify-center mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900">
+            <div className="flex justify-center mb-6">
+              <div className="p-4 bg-white rounded-full shadow-lg border border-neutral-100">
+                <Logo height={60} width={60} disableLink />
+              </div>
+            </div>
+            <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-800 to-neutral-600 mb-2">
               Create your account
             </h2>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="text-sm text-neutral-500 font-medium">
               Already have an account?{' '}
               <Link
                 href="/login"
-                className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                className="text-[#790e61] hover:text-[#5a0149] font-bold hover:underline transition-all"
               >
                 Sign in
               </Link>
@@ -82,91 +111,107 @@ export default function RegisterPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3">
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="p-4 bg-red-50/50 backdrop-blur-sm border border-red-100 rounded-2xl flex items-start gap-3"
+              >
                 <svg className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p className="text-sm text-red-600">{error}</p>
-              </div>
+                <p className="text-sm text-red-600 font-medium">{error}</p>
+              </motion.div>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="name" className="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2 ml-1">
                   Full Name
                 </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  autoComplete="name"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 placeholder-gray-400"
-                  placeholder="Enter your full name"
-                />
+                <div className="relative group">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-[#790e61] transition-colors" />
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    autoComplete="name"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-neutral-200 bg-white/50 focus:bg-white focus:ring-4 focus:ring-[#790e61]/10 focus:border-[#790e61] transition-all outline-none text-neutral-800 placeholder-neutral-400 font-medium"
+                    placeholder="Enter your full name"
+                  />
+                </div>
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2 ml-1">
                   Email Address
                 </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 placeholder-gray-400"
-                  placeholder="you@example.com"
-                />
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-[#790e61] transition-colors" />
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-neutral-200 bg-white/50 focus:bg-white focus:ring-4 focus:ring-[#790e61]/10 focus:border-[#790e61] transition-all outline-none text-neutral-800 placeholder-neutral-400 font-medium"
+                    placeholder="you@example.com"
+                  />
+                </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2 ml-1">
                   Password
                 </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 placeholder-gray-400"
-                  placeholder="Create a password"
-                />
-                <p className="mt-1.5 text-xs text-gray-500">Must be at least 6 characters</p>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-[#790e61] transition-colors" />
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-neutral-200 bg-white/50 focus:bg-white focus:ring-4 focus:ring-[#790e61]/10 focus:border-[#790e61] transition-all outline-none text-neutral-800 placeholder-neutral-400 font-medium"
+                    placeholder="Create a password"
+                  />
+                </div>
+                <p className="mt-2 ml-1 text-xs text-neutral-400 font-medium">Must be at least 6 characters</p>
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="confirmPassword" className="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2 ml-1">
                   Confirm Password
                 </label>
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 placeholder-gray-400"
-                  placeholder="Confirm your password"
-                />
+                <div className="relative group">
+                  <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-[#790e61] transition-colors" />
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-neutral-200 bg-white/50 focus:bg-white focus:ring-4 focus:ring-[#790e61]/10 focus:border-[#790e61] transition-all outline-none text-neutral-800 placeholder-neutral-400 font-medium"
+                    placeholder="Confirm your password"
+                  />
+                </div>
               </div>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 bg-[#6f025c] hover:bg-[#5a0149] text-white font-semibold rounded-xl shadow-lg shadow-[#6f025c]/25 hover:shadow-[#6f025c]/40 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-4 px-4 bg-[#790e61] hover:bg-[#5a0149] text-white font-bold text-lg rounded-2xl shadow-xl shadow-[#790e61]/20 hover:shadow-[#790e61]/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-8"
             >
               {isLoading ? (
                 <>
@@ -181,18 +226,19 @@ export default function RegisterPage() {
               )}
             </button>
 
-            <p className="text-center text-xs text-gray-500 mt-4">
+            <p className="text-center text-xs text-neutral-400 mt-6 font-medium">
               By signing up, you agree to our{' '}
-              <a href="#" className="text-blue-600 hover:underline">Terms</a>
+              <a href="#" className="text-[#790e61] hover:underline font-bold">Terms</a>
               {' '}and{' '}
-              <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a>
+              <a href="#" className="text-[#790e61] hover:underline font-bold">Privacy Policy</a>
             </p>
           </form>
-        </div>
+        </motion.div>
 
         <p className="mt-6 text-center text-xs text-gray-400">
           © 2024 Yubbox. All rights reserved.
         </p>
+        </div>
       </div>
     </div>
   );

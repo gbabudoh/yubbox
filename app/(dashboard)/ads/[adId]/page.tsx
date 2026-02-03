@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { IAd, IReview } from '@/types/models';
 import { adService } from '@/services/adService';
+import { MOCK_ADS } from '@/lib/mockData';
 import { reviewService } from '@/services/reviewService';
 import { analyticsService } from '@/services/analyticsService';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import CountdownTimer from '@/components/CountdownTimer';
 import { useI18n } from '@/lib/i18n-context';
 import { getCountryByCode } from '@/lib/countries';
@@ -34,10 +34,41 @@ export default function AdDetailPage() {
   });
   const [error, setError] = useState<string | null>(null);
 
+  const fetchAdAndReviews = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Check for mock ad first
+      const mockAd = MOCK_ADS.find(a => String(a._id) === adId);
+      
+      if (mockAd) {
+        setAd(mockAd as IAd);
+        setReviews([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // If not mock, fetch from API
+      const [adData, reviewsData] = await Promise.all([
+        adService.getAdById(adId),
+        reviewService.getReviewsByAdId(adId),
+      ]);
+      setAd(adData);
+      setReviews(reviewsData);
+    } catch (err) {
+      console.error('Failed to fetch ad:', err);
+      setError(
+        err instanceof Error ? err.message : t('errors.failedToLoad')
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [adId, t]);
+
   useEffect(() => {
     fetchAdAndReviews();
-  }, [adId]);
-
+  }, [fetchAdAndReviews]);
   useEffect(() => {
     // Track view when ad is loaded
     if (ad && ad.isActive && ad.expiryDate && new Date(ad.expiryDate) >= new Date()) {
@@ -47,24 +78,6 @@ export default function AdDetailPage() {
       });
     }
   }, [ad]);
-
-  const fetchAdAndReviews = async () => {
-    try {
-      setIsLoading(true);
-      const [adData, reviewsData] = await Promise.all([
-        adService.getAdById(adId),
-        reviewService.getReviewsByAdId(adId),
-      ]);
-      setAd(adData);
-      setReviews(reviewsData);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : t('errors.failedToLoad')
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleWebsiteClick = () => {
     if (ad) {

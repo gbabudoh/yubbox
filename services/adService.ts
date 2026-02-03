@@ -78,5 +78,17 @@ export const adService = {
       throw new Error(error.error || 'Failed to delete ad');
     }
   },
+
+  async voteAd(adId: string): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/${adId}/vote`, {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to vote');
+    }
+    const data = await response.json();
+    return data.data.yubboxCount;
+  },
 };
 

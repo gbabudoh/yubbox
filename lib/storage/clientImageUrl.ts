@@ -81,8 +81,8 @@ export function getImageUrlSync(imageKey: string, options: {
   }
 
   // TEMPORARY: For testing without MinIO/imgproxy, serve from public directory
-  if (imageKey.startsWith('images/')) {
-    return `/${imageKey}`;
+  if (imageKey.startsWith('images/') || imageKey.startsWith('/images/')) {
+    return imageKey.startsWith('/') ? imageKey : `/${imageKey}`;
   }
 
   // If CDN base URL is configured, construct URL directly
