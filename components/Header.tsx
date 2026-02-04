@@ -50,7 +50,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchQuery, setSearchQuery }
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
             <input
               type="text"
-              placeholder="Find services, products..."
+              placeholder={t('common.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery?.(e.target.value)}
               className="w-full bg-white/50 border border-transparent focus:bg-white focus:border-indigo-300 rounded-full py-2 pl-11 pr-24 outline-none transition-all text-sm"
@@ -60,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchQuery, setSearchQuery }
               className="absolute right-1.5 top-1/2 -translate-y-1/2 hover:opacity-90 text-white text-[10px] font-bold uppercase tracking-wider px-4 py-1.5 rounded-full transition-all"
               style={{ backgroundColor: 'var(--primary-btn)' }}
             >
-              find
+              {t('common.find')}
             </button>
           </div>
         </form>

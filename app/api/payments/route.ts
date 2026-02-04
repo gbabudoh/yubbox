@@ -6,7 +6,7 @@ import Ad from '@/models/Ad';
 import Payment from '@/models/Payment';
 
 const AD_PRICE = 1.0; // $1.00 per listing
-const AD_DURATION_DAYS = 30;
+const AD_DURATION_DAYS = 14;
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,12 +49,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate expiry date (30 days from payment date - this is when counter starts)
+    // Calculate expiry date (14 days from payment date - this is when counter starts)
     const paymentDate = new Date();
     const expiryDate = new Date(paymentDate);
     expiryDate.setDate(expiryDate.getDate() + AD_DURATION_DAYS);
     
-    // Ensure we're setting exactly 30 days from payment
+    // Ensure we're setting exactly 14 days from payment
     expiryDate.setHours(23, 59, 59, 999); // Set to end of day for consistency
 
     // Create payment record
@@ -84,11 +84,12 @@ export async function POST(request: NextRequest) {
         ad,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to process payment';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to process payment',
+        error: message,
       },
       { status: 500 }
     );
@@ -111,7 +112,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const adId = searchParams.get('adId');
 
-    let query: any = { userId: session.user.id };
+    const query: { userId: string; adId?: string } = { userId: session.user.id };
 
     if (adId) {
       query.adId = adId;
@@ -125,11 +126,12 @@ export async function GET(request: NextRequest) {
       success: true,
       data: payments,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch payments';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch payments',
+        error: message,
       },
       { status: 500 }
     );

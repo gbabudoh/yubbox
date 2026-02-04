@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Ad from '@/models/Ad';
 
 // This endpoint can be called by a cron job to deactivate expired ads
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // Optional: Add authentication/authorization here for cron jobs
     // For now, we'll allow it to be called directly
@@ -38,11 +38,12 @@ export async function POST(request: NextRequest) {
       message: `Deactivated ${expiredAds.length} expired ads`,
       count: expiredAds.length,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to expire ads';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to expire ads',
+        error: message,
       },
       { status: 500 }
     );
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET endpoint to check expired ads (for manual checking)
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await dbConnect();
 
@@ -66,11 +67,12 @@ export async function GET(request: NextRequest) {
       count: expiredAds.length,
       ads: expiredAds,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to check expired ads';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to check expired ads',
+        error: message,
       },
       { status: 500 }
     );

@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Locale, defaultLocale, getLocale } from './i18n';
 
-type Translations = Record<string, any>;
+type TranslationValue = string | { [key: string]: TranslationValue };
+type Translations = Record<string, TranslationValue>;
 
 interface I18nContextType {
   locale: Locale;
@@ -51,11 +52,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
           case 'ar':
             translations = (await import('@/messages/ar.json')).default;
             break;
+          case 'pt':
+            translations = (await import('@/messages/pt.json')).default;
+            break;
           default:
             translations = (await import('@/messages/en.json')).default;
         }
         setTranslations(translations);
       } catch (error) {
+        console.error('Failed to load translations:', error);
         // Fallback to English if translation file doesn't exist
         const fallback = (await import('@/messages/en.json')).default;
         setTranslations(fallback);
@@ -71,11 +76,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const t = (key: string, params?: Record<string, string | number>): string => {
     const keys = key.split('.');
-    let value: any = translations;
+    let value: TranslationValue | undefined = translations;
 
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
-        value = value[k];
+        value = (value as { [key: string]: TranslationValue })[k];
       } else {
         return key; // Return key if translation not found
       }

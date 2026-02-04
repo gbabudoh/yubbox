@@ -27,11 +27,12 @@ export async function GET(request: NextRequest) {
       success: true,
       data: reviews,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch reviews';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch reviews',
+        error: message,
       },
       { status: 500 }
     );
@@ -90,11 +91,12 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to create review';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to create review',
+        error: message,
       },
       { status: 500 }
     );

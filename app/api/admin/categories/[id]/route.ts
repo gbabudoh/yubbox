@@ -28,17 +28,18 @@ export async function GET(
       success: true,
       data: category,
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to fetch category';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch category',
+        error: message,
       },
       { status: 500 }
     );
@@ -88,23 +89,24 @@ export async function PUT(
       success: true,
       data: category,
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
-    if (error.code === 11000) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
       return NextResponse.json(
         { success: false, error: 'Category with this name already exists' },
         { status: 400 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to update category';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to update category',
+        error: message,
       },
       { status: 500 }
     );
@@ -136,17 +138,18 @@ export async function DELETE(
       success: true,
       message: 'Category deleted successfully',
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to delete category';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to delete category',
+        error: message,
       },
       { status: 500 }
     );

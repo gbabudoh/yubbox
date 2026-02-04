@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import BannerAd from '@/models/BannerAd';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await dbConnect();
 
@@ -21,11 +21,12 @@ export async function GET(request: NextRequest) {
       success: true,
       data: bannerAds,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch active banner ads';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch active banner ads',
+        error: message,
       },
       { status: 500 }
     );

@@ -17,7 +17,17 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type') || 'all'; // all, user_created, ad_created, payment, ad_view, ad_click
 
     const skip = (page - 1) * limit;
-    const activities: any[] = [];
+    const activities: Array<{
+      type: string;
+      description: string;
+      user?: string;
+      userId?: string;
+      adId?: string;
+      amount?: number;
+      status?: string;
+      timestamp: Date;
+      country?: string;
+    }> = [];
 
     // User registrations
     if (type === 'all' || type === 'user_created') {
@@ -28,12 +38,12 @@ export async function GET(request: NextRequest) {
         .limit(type === 'all' ? limit : 50)
         .lean();
 
-      users.forEach((user: any) => {
+      users.forEach((user) => {
         activities.push({
           type: 'user_created',
           description: `New user registered: ${user.name} (${user.email})`,
           user: user.name,
-          userId: user._id,
+          userId: user._id.toString(),
           timestamp: user.createdAt,
         });
       });
@@ -49,13 +59,14 @@ export async function GET(request: NextRequest) {
         .limit(type === 'all' ? limit : 50)
         .lean();
 
-      ads.forEach((ad: any) => {
+      ads.forEach((ad) => {
+        const user = ad.userId as unknown as { name?: string; _id: string };
         activities.push({
           type: 'ad_created',
           description: `Ad created: "${ad.title}"`,
-          user: ad.userId?.name || 'Unknown',
-          userId: ad.userId?._id,
-          adId: ad._id,
+          user: user?.name || 'Unknown',
+          userId: user?._id?.toString(),
+          adId: ad._id.toString(),
           timestamp: ad.createdAt,
         });
       });
@@ -72,12 +83,14 @@ export async function GET(request: NextRequest) {
         .limit(type === 'all' ? limit : 50)
         .lean();
 
-      payments.forEach((payment: any) => {
+      payments.forEach((payment) => {
+        const user = payment.userId as unknown as { name?: string; _id: string };
+        const ad = payment.adId as unknown as { title?: string };
         activities.push({
           type: 'payment',
-          description: `Payment ${payment.status}: $${payment.amount?.toFixed(2)} for "${payment.adId?.title || 'Unknown Ad'}"`,
-          user: payment.userId?.name || 'Unknown',
-          userId: payment.userId?._id,
+          description: `Payment ${payment.status}: $${payment.amount?.toFixed(2)} for "${ad?.title || 'Unknown Ad'}"`,
+          user: user?.name || 'Unknown',
+          userId: user?._id?.toString(),
           amount: payment.amount,
           status: payment.status,
           timestamp: payment.createdAt,
@@ -95,11 +108,12 @@ export async function GET(request: NextRequest) {
         .limit(type === 'all' ? limit : 50)
         .lean();
 
-      views.forEach((view: any) => {
+      views.forEach((view) => {
+        const ad = view.adId as unknown as { title?: string; _id: string };
         activities.push({
           type: 'ad_view',
-          description: `Ad viewed: "${view.adId?.title || 'Unknown'}" from ${view.country || 'Unknown'}`,
-          adId: view.adId?._id,
+          description: `Ad viewed: "${ad?.title || 'Unknown'}" from ${view.country || 'Unknown'}`,
+          adId: ad?._id?.toString(),
           country: view.country,
           timestamp: view.createdAt,
         });
@@ -116,11 +130,12 @@ export async function GET(request: NextRequest) {
         .limit(type === 'all' ? limit : 50)
         .lean();
 
-      clicks.forEach((click: any) => {
+      clicks.forEach((click) => {
+        const ad = click.adId as unknown as { title?: string; _id: string };
         activities.push({
           type: 'ad_click',
-          description: `Ad clicked: "${click.adId?.title || 'Unknown'}" from ${click.country || 'Unknown'}`,
-          adId: click.adId?._id,
+          description: `Ad clicked: "${ad?.title || 'Unknown'}" from ${click.country || 'Unknown'}`,
+          adId: ad?._id?.toString(),
           country: click.country,
           timestamp: click.createdAt,
         });
@@ -143,11 +158,12 @@ export async function GET(request: NextRequest) {
         },
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch activities';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch activities',
+        error: message,
       },
       { status: 500 }
     );

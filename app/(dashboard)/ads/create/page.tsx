@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 import AdForm from '@/components/AdForm';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useI18n } from '@/lib/i18n-context';
 import { adService } from '@/services/adService';
 
 export default function CreateAdPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const { t } = useI18n();
   const router = useRouter();
 
@@ -41,11 +42,14 @@ export default function CreateAdPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">{t('ad.createNewAd') || 'Create New Yubbox'}</h1>
-          <p className="mt-2 text-gray-600">
-            {t('ad.shareProduct')}
-          </p>
+        <div className="mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">{t('ad.createNewAd') || 'Create New Yubbox'}</h1>
+            <p className="mt-2 text-gray-600">
+              {t('ad.shareProduct')}
+            </p>
+          </div>
+          <LanguageSwitcher />
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           <AdForm onSubmit={handleSubmit} />

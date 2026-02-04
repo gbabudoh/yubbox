@@ -2,13 +2,13 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, Plus } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import AdCard from '@/components/AdCard';
 import Header from '@/components/Header';
 import BannerAdDisplay from '@/components/BannerAdDisplay';
+import Footer from '@/components/Footer';
 import FilterBar from '@/components/FilterBar';
 import { IAd } from '@/types/models';
 import { adService } from '@/services/adService';
@@ -33,7 +33,7 @@ export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedType, setSelectedType] = useState<'product' | 'service' | null>(null);
+  const [selectedType, setSelectedType] = useState<'product' | 'service' | 'trending' | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,8 +42,8 @@ export default function Home() {
   // Set initial type from query params
   useEffect(() => {
     const typeParam = searchParams.get('type');
-    if (typeParam === 'product' || typeParam === 'service') {
-      setSelectedType(typeParam);
+    if (typeParam === 'product' || typeParam === 'service' || typeParam === 'trending') {
+      setSelectedType(typeParam as 'product' | 'service' | 'trending');
     }
   }, [searchParams]);
   
@@ -89,33 +89,38 @@ export default function Home() {
     fetchCategories();
   }, []);
 
-  const filteredAds = ads.filter((ad) => {
-    // Search Query
-    if (searchQuery) {
-      const matchesSearch = 
-        ad.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ad.description?.toLowerCase().includes(searchQuery.toLowerCase());
-      if (!matchesSearch) return false;
-    }
+  const filteredAds = ads
+    .filter((ad) => {
+      // Search Query
+      if (searchQuery) {
+        const matchesSearch = 
+          ad.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          ad.description?.toLowerCase().includes(searchQuery.toLowerCase());
+        if (!matchesSearch) return false;
+      }
 
-    // Type Filter (Product vs Service)
-    if (selectedType) {
-      const adCategory = categories.find(c => c._id === String(ad.categoryId._id || ad.categoryId));
-      if (!adCategory || adCategory.type !== selectedType) return false;
-    }
+      // Type Filter (Product vs Service vs Trending)
+      if (selectedType && selectedType !== 'trending') {
+        const adCategory = categories.find(c => c._id === String(ad.categoryId._id || ad.categoryId));
+        if (!adCategory || adCategory.type !== selectedType) return false;
+      }
 
-    // Category Filter
-    if (selectedCategory) {
-      const adCatId = String(ad.categoryId._id || ad.categoryId);
-      if (adCatId !== selectedCategory) return false;
-    }
-    
-    // Country Filter (Client-side refinement if needed, though fetchAds handles it mostly)
-    // fetchAds is effectively handling country filtering via API for efficiency, 
-    // but if we want instant client-side filtering without refetching for other filters:
-    // Actually fetchAds depends on selectedCountry, so this is just for safety.
-    return true;
-  });
+      // Category Filter
+      if (selectedCategory) {
+        const adCatId = String(ad.categoryId._id || ad.categoryId);
+        if (adCatId !== selectedCategory) return false;
+      }
+      
+      return true;
+    })
+    .sort((a, b) => {
+      // If trending is selected, sort by yubboxCount descending
+      if (selectedType === 'trending') {
+        return (b.yubboxCount || 0) - (a.yubboxCount || 0);
+      }
+      // Otherwise use default sorting (createdAt descending)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
   return (
     <div className="min-h-screen">
@@ -210,25 +215,7 @@ export default function Home() {
         </section>
       </main>
       
-      {/* Scroll to top decorative element */}
-      <footer className="py-20 border-t border-neutral-100">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-4">
-            {/* Logos or branding */}
-            {/* Logos or branding */}
-            <Image 
-              src="/icon.png" 
-              alt="Yubbox" 
-              width={50} 
-              height={50} 
-              className="object-contain"
-            />
-          </div>
-          <p className="text-sm text-neutral-400 font-medium">
-            © 2026 Yubbox Advertising Platform. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

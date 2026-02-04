@@ -2,6 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n-context';
 
 interface LogoProps {
   className?: string;
@@ -18,11 +19,12 @@ const Logo: React.FC<LogoProps> = ({
   showText = false,
   disableLink = false,
 }) => {
+  const { t } = useI18n();
   const content = (
     <div className={cn('flex items-center gap-3', className)}>
       <Image
         src="/logo.png"
-        alt="Yubbox Logo"
+        alt={t('common.logoAlt') || "Yubbox Logo"}
         width={width}
         height={height}
         className="object-contain"

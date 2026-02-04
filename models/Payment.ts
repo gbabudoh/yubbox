@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IPayment extends Document {
+  _id: mongoose.Types.ObjectId;
   adId: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   amount: number; // Amount in USD
@@ -9,7 +10,7 @@ export interface IPayment extends Document {
   paymentMethod: string; // e.g., 'stripe', 'paypal', 'manual'
   transactionId?: string;
   paymentDate: Date;
-  expiryDate: Date; // 30 days from payment
+  expiryDate: Date; // 14 days from payment
   createdAt: Date;
   updatedAt: Date;
 }

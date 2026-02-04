@@ -5,6 +5,7 @@ import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
 import Link from 'next/link';
+import Footer from '@/components/Footer';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function AdminLoginPage() {
 
   // Redirect if already logged in as admin
   useEffect(() => {
-    if (status === 'authenticated' && (session?.user as any)?.role === 'admin') {
+    if (status === 'authenticated' && (session?.user as { role?: string })?.role === 'admin') {
       router.push('/admin');
     }
   }, [status, session, router]);
@@ -55,6 +56,7 @@ export default function AdminLoginPage() {
       router.push('/admin');
       router.refresh();
     } catch (err) {
+      console.error('Admin login error:', err);
       setError('An error occurred. Please try again.');
       setIsLoading(false);
     }
@@ -202,9 +204,7 @@ export default function AdminLoginPage() {
           </form>
         </div>
 
-        <p className="mt-6 text-center text-xs text-gray-300">
-          © 2024 Yubbox Admin Portal. All rights reserved.
-        </p>
+        <Footer variant="simple" className="text-gray-300" />
       </div>
     </div>
   );

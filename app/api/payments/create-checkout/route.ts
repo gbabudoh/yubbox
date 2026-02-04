@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate expiry date (30 days from payment)
+    // Calculate expiry date from payment
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + AD_DURATION_DAYS);
     expiryDate.setHours(23, 59, 59, 999);
@@ -76,8 +76,8 @@ export async function POST(request: NextRequest) {
             product_data: {
               name: isRelist ? `Relist Yubbox: ${ad.title}` : `Yubbox Listing: ${ad.title}`,
               description: isRelist 
-                ? 'Relist your Yubbox for 30 days' 
-                : 'Activate your Yubbox listing for 30 days',
+                ? `Relist your Yubbox for ${AD_DURATION_DAYS} days` 
+                : `Activate your Yubbox listing for ${AD_DURATION_DAYS} days`,
             },
             unit_amount: dollarsToCents(AD_PRICE),
           },
@@ -108,12 +108,13 @@ export async function POST(request: NextRequest) {
         paymentId: payment._id,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating checkout session:', error);
+    const message = error instanceof Error ? error.message : 'Failed to create checkout session';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to create checkout session',
+        error: message,
       },
       { status: 500 }
     );

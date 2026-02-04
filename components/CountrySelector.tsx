@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { COUNTRIES, Country } from '@/lib/countries';
+import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
 
 interface CountrySelectorProps {
@@ -19,6 +20,7 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useI18n();
 
   const filteredCountries = COUNTRIES.filter((country) =>
     country.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -63,7 +65,7 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
   return (
     <div className={cn('relative country-selector-dropdown', className)}>
       <label className="block text-sm font-medium text-gray-700 mb-2">
-        Target Countries
+        {t('country.targetCountries') || 'Target Countries'}
       </label>
 
       {/* Selected Countries Display */}
@@ -92,7 +94,7 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
       <div className="relative">
         <input
           type="text"
-          placeholder="Search countries..."
+          placeholder={t('country.searchCountries') || "Search countries..."}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onFocus={() => setIsOpen(true)}
@@ -102,7 +104,7 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
           <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
             {filteredCountries.length === 0 ? (
               <div className="p-4 text-gray-500 text-center">
-                No countries found
+                {t('country.noCountriesFound') || 'No countries found'}
               </div>
             ) : (
               filteredCountries.map((country) => {
@@ -143,7 +145,7 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
 
       {maxSelections && (
         <p className="mt-1 text-xs text-gray-500">
-          {selectedCountries.length} / {maxSelections} countries selected
+          {t('country.selectionCount', { count: selectedCountries.length, max: maxSelections }) || `${selectedCountries.length} / ${maxSelections} countries selected`}
         </p>
       )}
     </div>

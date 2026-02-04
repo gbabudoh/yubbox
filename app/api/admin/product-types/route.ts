@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const includeInactive = searchParams.get('includeInactive') === 'true';
     const type = searchParams.get('type'); // 'service' or 'physical'
 
-    const query: any = {};
+    const query: { isActive?: boolean; type?: string } = {};
     if (!includeInactive) {
       query.isActive = true;
     }
@@ -29,17 +29,18 @@ export async function GET(request: NextRequest) {
       success: true,
       data: productTypes,
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to fetch product types';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch product types',
+        error: message,
       },
       { status: 500 }
     );
@@ -86,23 +87,24 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
-    if (error.code === 11000) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
       return NextResponse.json(
         { success: false, error: 'Product type with this name already exists' },
         { status: 400 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to create product type';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to create product type',
+        error: message,
       },
       { status: 500 }
     );

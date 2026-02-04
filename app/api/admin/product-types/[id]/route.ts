@@ -28,17 +28,18 @@ export async function GET(
       success: true,
       data: productType,
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to fetch product type';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch product type',
+        error: message,
       },
       { status: 500 }
     );
@@ -81,23 +82,24 @@ export async function PUT(
       success: true,
       data: productType,
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
-    if (error.code === 11000) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
       return NextResponse.json(
         { success: false, error: 'Product type with this name already exists' },
         { status: 400 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to update product type';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to update product type',
+        error: message,
       },
       { status: 500 }
     );
@@ -129,17 +131,18 @@ export async function DELETE(
       success: true,
       message: 'Product type deleted successfully',
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to delete product type';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to delete product type',
+        error: message,
       },
       { status: 500 }
     );

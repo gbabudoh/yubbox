@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Industry from '@/models/Industry';
 
 /**
  * GET - Get all active industries (public endpoint)
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await dbConnect();
 
@@ -17,11 +17,12 @@ export async function GET(request: NextRequest) {
       success: true,
       data: industries,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch industries';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch industries',
+        error: message,
       },
       { status: 500 }
     );

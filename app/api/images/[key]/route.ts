@@ -36,11 +36,12 @@ export async function GET(
       success: true,
       url: optimizedUrl,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to generate image URL';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to generate image URL',
+        error: message,
       },
       { status: 500 }
     );

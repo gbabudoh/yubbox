@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const includeInactive = searchParams.get('includeInactive') === 'true';
 
-    const query: any = {};
+    const query: { isActive?: boolean } = {};
     if (!includeInactive) {
       query.isActive = true;
     }
@@ -24,17 +24,18 @@ export async function GET(request: NextRequest) {
       success: true,
       data: bannerAds,
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to fetch banner ads';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch banner ads',
+        error: message,
       },
       { status: 500 }
     );
@@ -86,17 +87,18 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to create banner ad';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to create banner ad',
+        error: message,
       },
       { status: 500 }
     );

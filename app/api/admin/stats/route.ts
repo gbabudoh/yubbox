@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';
 import Ad from '@/models/Ad';
 import Payment from '@/models/Payment';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await requireAdmin();
     await dbConnect();
@@ -54,11 +54,12 @@ export async function GET(request: NextRequest) {
         recentPayments,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch stats';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch stats',
+        error: message,
       },
       { status: 500 }
     );

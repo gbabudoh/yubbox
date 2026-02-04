@@ -28,17 +28,18 @@ export async function GET(
       success: true,
       data: industry,
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to fetch industry';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch industry',
+        error: message,
       },
       { status: 500 }
     );
@@ -87,23 +88,24 @@ export async function PUT(
       success: true,
       data: industry,
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
-    if (error.code === 11000) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
       return NextResponse.json(
         { success: false, error: 'Industry with this name already exists' },
         { status: 400 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to update industry';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to update industry',
+        error: message,
       },
       { status: 500 }
     );
@@ -135,17 +137,18 @@ export async function DELETE(
       success: true,
       message: 'Industry deleted successfully',
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to delete industry';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to delete industry',
+        error: message,
       },
       { status: 500 }
     );

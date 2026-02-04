@@ -8,6 +8,7 @@ import { ArrowLeft, User, Mail, Lock, ShieldCheck } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { useI18n } from '@/lib/i18n-context';
 import { authService } from '@/services/authService';
+import Footer from '@/components/Footer';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -235,9 +236,7 @@ export default function RegisterPage() {
           </form>
         </motion.div>
 
-        <p className="mt-6 text-center text-xs text-gray-400">
-          © 2024 Yubbox. All rights reserved.
-        </p>
+        <Footer variant="simple" />
         </div>
       </div>
     </div>

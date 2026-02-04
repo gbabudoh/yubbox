@@ -15,24 +15,30 @@ export default function PaymentSuccessPage() {
   const { t } = useI18n();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [verifyAttempts, setVerifyAttempts] = useState(0);
   const sessionId = searchParams.get('session_id');
   
   // Allow page to load even if session is loading - payment is handled by webhook
   const isSessionLoading = status === 'loading';
 
   useEffect(() => {
-    // Verify payment status with backend
-    const verifyPayment = async () => {
+    let isSubscribed = true;
+    let timer: NodeJS.Timeout;
+
+    const verifyPayment = async (attempt: number) => {
       if (!sessionId) {
-        setIsLoading(false);
-        setError('No session ID provided');
+        if (isSubscribed) {
+          setIsLoading(false);
+          setError('No session ID provided');
+        }
         return;
       }
+      if (!isSubscribed) return;
 
       try {
         // Wait a moment for webhook to process
         await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        if (!isSubscribed) return;
 
         // Verify payment status
         const response = await fetch('/api/payments/verify', {
@@ -46,20 +52,21 @@ export default function PaymentSuccessPage() {
         const data = await response.json();
 
         if (data.success && data.data?.isPaid) {
-          setIsLoading(false);
-          // Payment verified, redirect after showing success
-          setTimeout(() => {
-            router.push('/dashboard');
-          }, 3000);
+          if (isSubscribed) {
+            setIsLoading(false);
+            // Payment verified, redirect after showing success
+            setTimeout(() => {
+              router.push('/dashboard');
+            }, 3000);
+          }
         } else {
           // Payment not yet processed, try again (max 5 attempts = 10 seconds)
-          if (verifyAttempts < 5) {
-            setVerifyAttempts(prev => prev + 1);
-            setTimeout(() => {
-              verifyPayment();
+          if (attempt < 5 && isSubscribed) {
+            timer = setTimeout(() => {
+              verifyPayment(attempt + 1);
             }, 2000);
-          } else {
-            // Max attempts reached, show success anyway (webhook will process)
+          } else if (isSubscribed) {
+            // Max attempts reached, show success anyway (webhook will process eventually)
             setIsLoading(false);
             setTimeout(() => {
               router.push('/dashboard');
@@ -68,20 +75,35 @@ export default function PaymentSuccessPage() {
         }
       } catch (err) {
         console.error('Payment verification error:', err);
-        setIsLoading(false);
-        // Still show success page - webhook will process it
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 3000);
+        if (isSubscribed) {
+          setIsLoading(false);
+          // Still show success page - webhook will process it
+          setTimeout(() => {
+            router.push('/dashboard');
+          }, 3000);
+        }
       }
     };
 
     if (sessionId) {
-      verifyPayment();
+      verifyPayment(0);
     } else {
-      setIsLoading(false);
+      // Small delay to avoid synchronous state update in effect body
+      const timeout = setTimeout(() => {
+        if (isSubscribed) setIsLoading(false);
+      }, 0);
+      return () => {
+        isSubscribed = false;
+        clearTimeout(timeout);
+      };
     }
-  }, [sessionId, router, verifyAttempts]);
+
+    return () => {
+      isSubscribed = true;
+      isSubscribed = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [sessionId, router]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -116,7 +138,7 @@ export default function PaymentSuccessPage() {
               {t('payment.success') || 'Payment Successful!'}
             </h2>
             <p className="text-gray-600 mb-6">
-              {t('payment.successMessage') || 'Your Yubbox has been activated and will be live for 30 days.'}
+              {t('payment.successMessage') || 'Your Yubbox has been activated and will be live for 14 days.'}
             </p>
             <div className="space-y-3">
               <Link href="/dashboard">

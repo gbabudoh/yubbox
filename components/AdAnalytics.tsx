@@ -10,26 +10,44 @@ interface AdAnalyticsProps {
   ad: IAd;
 }
 
+interface StatItem {
+  _id: string | number;
+  count: number;
+}
+
+interface Statistics {
+  totalViews: number;
+  totalClicks: number;
+  clickThroughRate: number;
+  countryStats: StatItem[];
+  hourlyStats: StatItem[];
+  dailyStats: StatItem[];
+}
+
+interface AnalyticsData {
+  statistics: Statistics;
+}
+
 const AdAnalytics: React.FC<AdAnalyticsProps> = ({ ad }) => {
   const { t } = useI18n();
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setIsLoading(true);
+        const data = await analyticsService.getAnalytics(String(ad._id));
+        setAnalytics(data);
+      } catch (error) {
+        console.error('Failed to fetch analytics:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchAnalytics();
   }, [ad._id]);
-
-  const fetchAnalytics = async () => {
-    try {
-      setIsLoading(true);
-      const data = await analyticsService.getAnalytics(String(ad._id));
-      setAnalytics(data);
-    } catch (error) {
-      console.error('Failed to fetch analytics:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -85,8 +103,8 @@ const AdAnalytics: React.FC<AdAnalyticsProps> = ({ ad }) => {
             {t('ad.clicksByCountry') || 'Clicks by Country'}
           </h3>
           <div className="space-y-2">
-            {statistics.countryStats.map((stat: any, index: number) => {
-              const country = getCountryByCode(stat._id);
+            {statistics.countryStats.map((stat, index) => {
+              const country = getCountryByCode(String(stat._id));
               return (
                 <div
                   key={index}
@@ -117,11 +135,11 @@ const AdAnalytics: React.FC<AdAnalyticsProps> = ({ ad }) => {
           <div className="grid grid-cols-12 gap-2">
             {Array.from({ length: 24 }).map((_, hour) => {
               const hourStat = statistics.hourlyStats.find(
-                (h: any) => h._id === hour
+                (h) => h._id === hour
               );
               const count = hourStat?.count || 0;
               const maxCount = Math.max(
-                ...statistics.hourlyStats.map((h: any) => h.count),
+                ...statistics.hourlyStats.map((h) => h.count),
                 1
               );
               const height = (count / maxCount) * 100;
@@ -149,12 +167,12 @@ const AdAnalytics: React.FC<AdAnalyticsProps> = ({ ad }) => {
       {statistics.dailyStats && statistics.dailyStats.length > 0 && (
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            {t('ad.clicksLast30Days') || 'Clicks (Last 30 Days)'}
+            {t('ad.clicksLast30Days') || 'Clicks (Last 14 Days)'}
           </h3>
           <div className="space-y-2">
-            {statistics.dailyStats.map((stat: any, index: number) => {
+            {statistics.dailyStats.map((stat, index) => {
               const maxCount = Math.max(
-                ...statistics.dailyStats.map((s: any) => s.count),
+                ...statistics.dailyStats.map((s) => s.count),
                 1
               );
               const width = (stat.count / maxCount) * 100;

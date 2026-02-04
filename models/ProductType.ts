@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IProductType extends Document {
+  _id: mongoose.Types.ObjectId;
   name: string;
   slug: string;
   type: 'service' | 'physical'; // Service product or Physical product

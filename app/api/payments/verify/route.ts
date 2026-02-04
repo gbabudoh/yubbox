@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
           // Payment was successful, update our records
           const paymentDate = new Date();
           const expiryDate = new Date(paymentDate);
-          expiryDate.setDate(expiryDate.getDate() + 30);
+          expiryDate.setDate(expiryDate.getDate() + 14);
           expiryDate.setHours(23, 59, 59, 999);
 
           payment.status = 'completed';
@@ -118,12 +118,13 @@ export async function POST(request: NextRequest) {
             },
           });
         }
-      } catch (stripeError: any) {
+      } catch (stripeError: unknown) {
         console.error('Stripe verification error:', stripeError);
+        const message = stripeError instanceof Error ? stripeError.message : 'Unknown Stripe error';
         return NextResponse.json({
           success: false,
           error: 'Failed to verify with Stripe',
-          details: stripeError.message,
+          details: message,
         });
       }
     }
@@ -132,15 +133,16 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         payment,
-        isPaid: payment.status === 'completed',
+        isPaid: false, // At this point, it's definitely not completed
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Payment verification error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to verify payment';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to verify payment',
+        error: message,
       },
       { status: 500 }
     );

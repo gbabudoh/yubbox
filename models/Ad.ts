@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IAd extends Document {
+  _id: mongoose.Types.ObjectId;
   title: string;
   description: string;
   imageUrl: string;
@@ -16,7 +17,7 @@ export interface IAd extends Document {
   isActive: boolean;
   isPaid: boolean; // Payment status
   paymentDate?: Date; // When payment was made
-  expiryDate: Date; // Ad expires after 30 days from payment
+  expiryDate: Date; // Ad expires after 14 days from payment
   topLensExpiry?: Date;
   storiesExpiry?: Date;
   yubboxCount: number;

@@ -101,6 +101,8 @@ export async function POST(request: NextRequest) {
       : formData.getAll('targetLocations') as string[];
     const categoryId = formData.get('categoryId') as string | null;
     const industryId = formData.get('industryId') as string | null;
+    const isTopLens = formData.get('isTopLens') === 'true';
+    const isStories = formData.get('isStories') === 'true';
     
     // Validation
     if (!title || !description || !imageUrl || !webLink || !ownerName || !location || !companyName) {
@@ -132,10 +134,10 @@ export async function POST(request: NextRequest) {
     }
 
     
-    // Set initial expiry date (30 days from now, but will be reset to 30 days from payment when paid)
-    // This is just a placeholder - actual expiry starts from payment date
-    const initialExpiryDate = new Date();
-    initialExpiryDate.setDate(initialExpiryDate.getDate() + 30);
+    // Set initial expiry dates
+    const now = new Date();
+    const expiryDate = new Date(now);
+    expiryDate.setDate(expiryDate.getDate() + 30);
 
     const adData: Record<string, unknown> = {
       title,
@@ -149,7 +151,9 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       isActive: true, // Active immediately (bypassing payment)
       isPaid: false,
-      expiryDate: initialExpiryDate, // Will be updated when payment is made
+      expiryDate,
+      topLensExpiry: isTopLens ? expiryDate : null,
+      storiesExpiry: isStories ? expiryDate : null,
     };
 
     // Add required fields

@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Category from '@/models/Category';
 
 /**
  * GET - Get all active categories (public endpoint)
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await dbConnect();
 
@@ -17,11 +17,12 @@ export async function GET(request: NextRequest) {
       success: true,
       data: categories,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch categories';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch categories',
+        error: message,
       },
       { status: 500 }
     );

@@ -24,17 +24,18 @@ export async function GET(
       success: true,
       data: bannerAd,
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to fetch banner ad';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch banner ad',
+        error: message,
       },
       { status: 500 }
     );
@@ -64,7 +65,17 @@ export async function PUT(
       }
     }
 
-    const updateData: any = {};
+    const updateData: {
+      title?: string;
+      description?: string;
+      imageUrl?: string;
+      linkUrl?: string;
+      cost?: number;
+      startDate?: Date;
+      endDate?: Date;
+      isActive?: boolean;
+      displayOrder?: number;
+    } = {};
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
@@ -92,17 +103,18 @@ export async function PUT(
       success: true,
       data: bannerAd,
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to update banner ad';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to update banner ad',
+        error: message,
       },
       { status: 500 }
     );
@@ -130,17 +142,18 @@ export async function DELETE(
       success: true,
       message: 'Banner ad deleted successfully',
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to delete banner ad';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to delete banner ad',
+        error: message,
       },
       { status: 500 }
     );

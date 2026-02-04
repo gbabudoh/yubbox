@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IAnalytics extends Document {
+  _id: mongoose.Types.ObjectId;
   adId: mongoose.Types.ObjectId;
   eventType: 'view' | 'click' | 'impression';
   country?: string;
@@ -9,6 +10,8 @@ export interface IAnalytics extends Document {
   referrer?: string;
   timestamp: Date;
   userId?: mongoose.Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const AnalyticsSchema: Schema<IAnalytics> = new Schema(

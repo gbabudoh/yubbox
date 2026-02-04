@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface ICategory extends Document {
+  _id: mongoose.Types.ObjectId;
   name: string;
   slug: string;
   type: 'product' | 'service'; // Product or Service category

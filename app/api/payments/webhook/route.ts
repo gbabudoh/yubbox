@@ -5,7 +5,7 @@ import dbConnect from '@/lib/dbConnect';
 import Ad from '@/models/Ad';
 import Payment from '@/models/Payment';
 
-const AD_DURATION_DAYS = 30;
+const AD_DURATION_DAYS = 14;
 
 /**
  * Stripe Webhook Handler
@@ -39,17 +39,17 @@ export async function POST(request: NextRequest) {
         signature,
         process.env.STRIPE_WEBHOOK_SECRET
       );
-    } catch (err: any) {
-      console.error('Webhook signature verification failed:', err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Webhook signature verification failed:', message);
       return NextResponse.json(
-        { error: `Webhook Error: ${err.message}` },
+        { error: `Webhook Error: ${message}` },
         { status: 400 }
       );
     }
 
-    // Handle the event
     if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as any;
+      const session = event.data.object as unknown as Record<string, unknown>;
 
       console.log('📦 Received checkout.session.completed event');
       console.log('📦 Session ID:', session.id);
@@ -57,10 +57,11 @@ export async function POST(request: NextRequest) {
       console.log('📦 Payment status:', session.payment_status);
 
       // Get payment ID from metadata
-      const paymentId = session.metadata?.paymentId;
-      const adId = session.metadata?.adId;
-      const userId = session.metadata?.userId;
-      const isRelist = session.metadata?.isRelist === 'true';
+      const metadata = (session.metadata as Record<string, string>) || {};
+      const paymentId = metadata.paymentId;
+      const adId = metadata.adId;
+      const userId = metadata.userId;
+      // const isRelist = session.metadata?.isRelist === 'true'; // Keep for logic but comment out if unused to fix lint
 
       if (!paymentId || !adId || !userId) {
         console.error('❌ Missing metadata in checkout session:', session.id);
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
 
       console.log(`✅ Found ad: ${adId}, current isPaid: ${ad.isPaid}`);
 
-      // Calculate expiry date (30 days from now)
+      // Calculate expiry date (14 days from now)
       const paymentDate = new Date();
       const expiryDate = new Date(paymentDate);
       expiryDate.setDate(expiryDate.getDate() + AD_DURATION_DAYS);
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
 
       // Update payment record
       payment.status = 'completed';
-      payment.transactionId = session.id;
+      payment.transactionId = session.id as string;
       payment.paymentDate = paymentDate;
       payment.expiryDate = expiryDate;
       await payment.save();
@@ -123,8 +124,9 @@ export async function POST(request: NextRequest) {
       console.log(`✅ Ad ${adId} marked as paid and active`);
       console.log(`✅ Expiry date set to: ${expiryDate.toISOString()}`);
     } else if (event.type === 'checkout.session.async_payment_failed') {
-      const session = event.data.object as any;
-      const paymentId = session.metadata?.paymentId;
+      const session = event.data.object as unknown as Record<string, unknown>;
+      const metadata = (session.metadata as Record<string, string>) || {};
+      const paymentId = metadata.paymentId;
 
       if (paymentId) {
         await dbConnect();
@@ -137,11 +139,12 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ received: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Webhook error:', error);
+    const message = error instanceof Error ? error.message : 'Webhook handler failed';
     return NextResponse.json(
       {
-        error: error.message || 'Webhook handler failed',
+        error: message,
       },
       { status: 500 }
     );

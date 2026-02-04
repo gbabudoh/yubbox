@@ -3,9 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth';
 import dbConnect from '@/lib/dbConnect';
 import Ad from '@/models/Ad';
-import Category from '@/models/Category';
-import Industry from '@/models/Industry';
-import ProductType from '@/models/ProductType';
 
 export async function GET(
   request: NextRequest,
@@ -23,7 +20,7 @@ export async function GET(
         .populate('categoryId', 'name slug')
         .populate('industryId', 'name slug')
         .populate('productTypeId', 'name slug type');
-    } catch (populateError) {
+    } catch {
       // If populate fails, use basic populate
       ad = await Ad.findById(adId)
         .populate('userId', 'name email');
@@ -40,11 +37,11 @@ export async function GET(
       success: true,
       data: ad,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch ad',
+        error: error instanceof Error ? error.message : 'Failed to fetch ad',
       },
       { status: 500 }
     );
@@ -94,6 +91,8 @@ export async function PUT(
     const countries = formData.getAll('countries').length > 0 
       ? formData.getAll('countries') as string[]
       : formData.getAll('targetLocations') as string[];
+    const isTopLens = formData.get('isTopLens') === 'true';
+    const isStories = formData.get('isStories') === 'true';
 
     // Update ad
     ad.title = title || ad.title;
@@ -102,6 +101,20 @@ export async function PUT(
     ad.webLink = webLink || ad.webLink;
     if (countries.length > 0) {
       ad.countries = countries;
+    }
+
+    // Handle premium feature updates
+    // If selecting Top Lens/Stories for an existing ad, set expiry to match standard ad expiry
+    if (isTopLens && !ad.topLensExpiry) {
+      ad.topLensExpiry = ad.expiryDate;
+    } else if (!isTopLens) {
+      ad.topLensExpiry = undefined;
+    }
+
+    if (isStories && !ad.storiesExpiry) {
+      ad.storiesExpiry = ad.expiryDate;
+    } else if (!isStories) {
+      ad.storiesExpiry = undefined;
     }
 
     await ad.save();
@@ -114,7 +127,7 @@ export async function PUT(
         .populate('categoryId', 'name slug')
         .populate('industryId', 'name slug')
         .populate('productTypeId', 'name slug type');
-    } catch (populateError) {
+    } catch {
       // If populate fails, use basic populate
       populatedAd = await Ad.findById(adId)
         .populate('userId', 'name email');
@@ -124,11 +137,11 @@ export async function PUT(
       success: true,
       data: populatedAd,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to update ad',
+        error: error instanceof Error ? error.message : 'Failed to update ad',
       },
       { status: 500 }
     );
@@ -175,11 +188,11 @@ export async function DELETE(
       success: true,
       message: 'Ad deleted successfully',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to delete ad',
+        error: error instanceof Error ? error.message : 'Failed to delete ad',
       },
       { status: 500 }
     );

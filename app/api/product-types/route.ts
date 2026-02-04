@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const type = searchParams.get('type'); // Optional filter: 'service' or 'physical'
 
-    const query: any = { isActive: true };
+    const query: { isActive: boolean; type?: string } = { isActive: true };
     if (type && ['service', 'physical'].includes(type)) {
       query.type = type;
     }
@@ -25,11 +25,12 @@ export async function GET(request: NextRequest) {
       success: true,
       data: productTypes,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch product types';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch product types',
+        error: message,
       },
       { status: 500 }
     );

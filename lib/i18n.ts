@@ -6,6 +6,7 @@ export const locales = [
   { code: 'ar', name: 'العربية', flag: '🇸🇦' },
   { code: 'ja', name: '日本語', flag: '🇯🇵' },
   { code: 'zh', name: '中文', flag: '🇨🇳' },
+  { code: 'pt', name: 'Português', flag: '🇵🇹' },
 ] as const;
 
 export type Locale = typeof locales[number]['code'];

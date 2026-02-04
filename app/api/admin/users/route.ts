@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const search = searchParams.get('search') || '';
 
-    const query: any = {};
+    const query: { $or?: Array<Record<string, unknown>> } = {};
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     // Get additional stats for each user
     const usersWithStats = await Promise.all(
-      users.map(async (user: any) => {
+      users.map(async (user) => {
         const adsCount = await Ad.countDocuments({ userId: user._id });
         const paymentsCount = await Payment.countDocuments({ userId: user._id, status: 'completed' });
         const payments = await Payment.find({ userId: user._id, status: 'completed' });
@@ -63,11 +63,12 @@ export async function GET(request: NextRequest) {
         },
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch users';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch users',
+        error: message,
       },
       { status: 500 }
     );
@@ -89,7 +90,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const updateData: any = {};
+    const updateData: { name?: string; email?: string; role?: string } = {};
     if (name) updateData.name = name;
     if (email) updateData.email = email;
     if (role) {
@@ -115,11 +116,12 @@ export async function PUT(request: NextRequest) {
       success: true,
       data: user,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to update user';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to update user',
+        error: message,
       },
       { status: 500 }
     );
@@ -163,11 +165,12 @@ export async function DELETE(request: NextRequest) {
       success: true,
       message: 'User deleted successfully',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to delete user';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to delete user',
+        error: message,
       },
       { status: 500 }
     );

@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { IAd } from '@/types/models';
-import { cn } from '@/lib/utils';
 import { getCountryByCode } from '@/lib/countries';
 import { paymentService } from '@/services/paymentService';
 import { useI18n } from '@/lib/i18n-context';
@@ -14,12 +13,7 @@ import Modal from './ui/Modal';
 import AdAnalytics from './AdAnalytics';
 import CountdownTimer from './CountdownTimer';
 
-interface DashboardAdCardProps {
-  ad: IAd;
-  onUpdate: () => void;
-}
-
-const DashboardAdCard: React.FC<DashboardAdCardProps> = ({ ad, onUpdate }) => {
+const DashboardAdCard: React.FC<{ ad: IAd }> = ({ ad }) => {
   const { t } = useI18n();
   const [isPaying, setIsPaying] = useState(false);
   const [isRelisting, setIsRelisting] = useState(false);
@@ -77,7 +71,7 @@ const DashboardAdCard: React.FC<DashboardAdCardProps> = ({ ad, onUpdate }) => {
               <div className="absolute top-2 left-2">
                 <Image
                   src="/icon.png"
-                  alt="Zupplet"
+                  alt="Yubbox"
                   width={24}
                   height={24}
                   className="rounded-full shadow-md border-2 border-white"
@@ -125,7 +119,7 @@ const DashboardAdCard: React.FC<DashboardAdCardProps> = ({ ad, onUpdate }) => {
                     {t('ad.expiresIn') || 'Expires in'}:
                   </span>
                   <span className="text-xs text-gray-600 mt-1">
-                    Active • Expires {new Date(ad.expiryDate).toLocaleDateString()}
+                    {t('ad.active') || 'Active'} • {t('ad.expires') || 'Expires'} {new Date(ad.expiryDate).toLocaleDateString()}
                   </span>
                 </div>
                 <CountdownTimer expiryDate={ad.expiryDate} />
@@ -134,7 +128,7 @@ const DashboardAdCard: React.FC<DashboardAdCardProps> = ({ ad, onUpdate }) => {
               <div className="text-sm text-green-600 font-semibold bg-green-50 p-3 rounded-lg border-2 border-green-300">
                 {t('ad.active') || 'Active'}
                 <div className="text-xs text-gray-600 mt-1">
-                  Your ad is now live and visible to users
+                  {t('ad.adLiveMessage') || 'Your ad is now live and visible to users'}
                 </div>
               </div>
             )}
@@ -166,7 +160,7 @@ const DashboardAdCard: React.FC<DashboardAdCardProps> = ({ ad, onUpdate }) => {
                 })}
               {(ad.countries || ad.targetLocations || []).length > 3 && (
                 <span className="px-2 py-1 text-xs text-gray-500">
-                  +{(ad.countries || ad.targetLocations || []).length - 3} more
+                  +{(ad.countries || ad.targetLocations || []).length - 3} {t('ad.more') || 'more'}
                 </span>
               )}
             </div>
@@ -180,7 +174,7 @@ const DashboardAdCard: React.FC<DashboardAdCardProps> = ({ ad, onUpdate }) => {
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                   </svg>
-                  Seller Information
+                  {t('ad.sellerInformation') || 'Seller Information'}
                 </h4>
               </div>
               <div className="p-4 space-y-3">
@@ -192,7 +186,7 @@ const DashboardAdCard: React.FC<DashboardAdCardProps> = ({ ad, onUpdate }) => {
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <span className="text-xs text-gray-500 block">Owner</span>
+                      <span className="text-xs text-gray-500 block">{t('ad.owner') || 'Owner'}</span>
                       <span className="text-sm font-semibold text-gray-900">{ad.ownerName}</span>
                     </div>
                   </div>
@@ -205,7 +199,7 @@ const DashboardAdCard: React.FC<DashboardAdCardProps> = ({ ad, onUpdate }) => {
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <span className="text-xs text-gray-500 block">Company</span>
+                      <span className="text-xs text-gray-500 block">{t('ad.company') || 'Company'}</span>
                       <span className="text-sm font-semibold text-gray-900">{ad.companyName}</span>
                     </div>
                   </div>
@@ -218,7 +212,7 @@ const DashboardAdCard: React.FC<DashboardAdCardProps> = ({ ad, onUpdate }) => {
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <span className="text-xs text-gray-500 block">Location</span>
+                      <span className="text-xs text-gray-500 block">{t('ad.location') || 'Location'}</span>
                       <span className="text-sm font-semibold text-gray-900">{ad.location}</span>
                     </div>
                   </div>
@@ -268,7 +262,7 @@ const DashboardAdCard: React.FC<DashboardAdCardProps> = ({ ad, onUpdate }) => {
         <div className="space-y-4">
           <p className="text-gray-700">
             {t('ad.paymentDescription') ||
-              'Pay $1.00 to activate your ad for 30 days'}
+              'Pay $1.00 to activate your ad for 14 days'}
           </p>
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex justify-between mb-2">
@@ -277,7 +271,7 @@ const DashboardAdCard: React.FC<DashboardAdCardProps> = ({ ad, onUpdate }) => {
             </div>
             <div className="flex justify-between mb-2">
               <span>{t('ad.duration') || 'Duration'}:</span>
-              <span className="font-semibold">30 {t('ad.days') || 'days'}</span>
+              <span className="font-semibold">14 {t('ad.days') || 'days'}</span>
             </div>
             <div className="border-t pt-2 mt-2">
               <div className="flex justify-between">

@@ -6,7 +6,7 @@ import Ad from '@/models/Ad';
 import Payment from '@/models/Payment';
 
 const AD_PRICE = 1.0;
-const AD_DURATION_DAYS = 30;
+const AD_DURATION_DAYS = 14;
 
 export async function POST(
   request: NextRequest,
@@ -44,12 +44,12 @@ export async function POST(
       );
     }
 
-    // Calculate new expiry date (30 days from relist payment date)
+    // Calculate new expiry date (AD_DURATION_DAYS days from relist payment date)
     const paymentDate = new Date();
     const expiryDate = new Date(paymentDate);
     expiryDate.setDate(expiryDate.getDate() + AD_DURATION_DAYS);
     
-    // Ensure we're setting exactly 30 days from payment
+    // Ensure we're setting exactly AD_DURATION_DAYS days from payment
     expiryDate.setHours(23, 59, 59, 999); // Set to end of day for consistency
 
     // Create new payment record for relisting
@@ -77,14 +77,15 @@ export async function POST(
       data: {
         payment,
         ad,
-        message: 'Ad successfully relisted for 30 days',
+        message: 'Ad successfully relisted for 14 days',
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to relist ad';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to relist ad',
+        error: message,
       },
       { status: 500 }
     );

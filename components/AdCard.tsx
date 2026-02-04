@@ -12,6 +12,7 @@ import { getImageUrlSync } from '@/lib/storage/clientImageUrl';
 import { adService } from '@/services/adService';
 import { MOCK_ADS } from '@/lib/mockData';
 import CountdownTimer from './CountdownTimer';
+import { useI18n } from '@/lib/i18n-context';
 
 interface AdCardProps {
   ad: IAd;
@@ -19,7 +20,7 @@ interface AdCardProps {
 }
 
 const AdCard: React.FC<AdCardProps> = ({ ad, className }) => {
-  // const { t } = useI18n();
+  const { t } = useI18n();
   const [yc, setYc] = useState(ad.yubboxCount || 0);
   const [isVoting, setIsVoting] = useState(false);
   
@@ -108,7 +109,7 @@ const AdCard: React.FC<AdCardProps> = ({ ad, className }) => {
             {/* View Details Hover Button */}
             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
               <div className="bg-white text-black px-6 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 transform translate-y-4 group-hover/card:translate-y-0 transition-transform duration-500">
-                View Details
+                {t('ad.viewDetails')}
                 <ArrowUpRight className="w-4 h-4" />
               </div>
             </div>
@@ -146,7 +147,7 @@ const AdCard: React.FC<AdCardProps> = ({ ad, className }) => {
                   </div>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] uppercase tracking-wider text-neutral-400 font-bold">Seller</span>
+                  <span className="text-[10px] uppercase tracking-wider text-neutral-400 font-bold">{t('ad.seller')}</span>
                   <span className="text-xs font-semibold text-neutral-700">{ad.ownerName}</span>
                 </div>
               </div>

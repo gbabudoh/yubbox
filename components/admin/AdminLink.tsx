@@ -4,9 +4,11 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import { useSession } from 'next-auth/react';
+import { useI18n } from '@/lib/i18n-context';
 
 export default function AdminLink() {
   const { data: session } = useSession();
+  const { t } = useI18n();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -58,7 +60,7 @@ export default function AdminLink() {
             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
           />
         </svg>
-        Admin Panel
+        {t('admin.adminPanel') || 'Admin Panel'}
       </Button>
     </Link>
   );

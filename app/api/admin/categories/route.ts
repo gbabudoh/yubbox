@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/nextauth';
 import { requireAdmin } from '@/lib/admin';
 import dbConnect from '@/lib/dbConnect';
 import Category from '@/models/Category';
@@ -16,7 +14,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const includeInactive = searchParams.get('includeInactive') === 'true';
 
-    const query: any = {};
+    const query: { isActive?: boolean } = {};
     if (!includeInactive) {
       query.isActive = true;
     }
@@ -27,17 +25,18 @@ export async function GET(request: NextRequest) {
       success: true,
       data: categories,
     });
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to fetch categories';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch categories',
+        error: message,
       },
       { status: 500 }
     );
@@ -91,23 +90,24 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
-    if (error.message === 'Admin access required') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
       );
     }
-    if (error.code === 11000) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
       return NextResponse.json(
         { success: false, error: 'Category with this name already exists' },
         { status: 400 }
       );
     }
+    const message = error instanceof Error ? error.message : 'Failed to create category';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to create category',
+        error: message,
       },
       { status: 500 }
     );

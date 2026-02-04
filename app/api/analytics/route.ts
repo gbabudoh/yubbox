@@ -47,11 +47,12 @@ export async function POST(request: NextRequest) {
       success: true,
       data: analytics,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to record analytics';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to record analytics',
+        error: message,
       },
       { status: 500 }
     );
@@ -94,7 +95,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query
-    let query: any = { adId };
+    const query: {
+      adId: string;
+      eventType?: string;
+      timestamp?: { $gte?: Date; $lte?: Date };
+    } = { adId };
 
     if (eventType) {
       query.eventType = eventType;
@@ -153,7 +158,7 @@ export async function GET(request: NextRequest) {
           adId: ad._id,
           eventType: 'click',
           timestamp: {
-            $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            $gte: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
           },
         },
       },
@@ -182,11 +187,12 @@ export async function GET(request: NextRequest) {
         },
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch analytics';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch analytics',
+        error: message,
       },
       { status: 500 }
     );
