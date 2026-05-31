@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin';
-import dbConnect from '@/lib/dbConnect';
-import ProductType from '@/models/ProductType';
+import { prisma } from '@/lib/prisma';
+import { ProductKind } from '@prisma/client';
 
 /**
  * GET - Get a single product type
@@ -12,10 +12,9 @@ export async function GET(
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
 
     const { id } = await params;
-    const productType = await ProductType.findById(id);
+    const productType = await prisma.productType.findUnique({ where: { id } });
 
     if (!productType) {
       return NextResponse.json(
@@ -55,28 +54,37 @@ export async function PUT(
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
 
     const { id } = await params;
     const body = await request.json();
     const { name, type, description, order, isActive } = body;
 
-    const productType = await ProductType.findById(id);
+    const existing = await prisma.productType.findUnique({ where: { id } });
 
-    if (!productType) {
+    if (!existing) {
       return NextResponse.json(
         { success: false, error: 'Product type not found' },
         { status: 404 }
       );
     }
 
-    if (name) productType.name = name;
-    if (type && ['service', 'physical'].includes(type)) productType.type = type;
-    if (description !== undefined) productType.description = description;
-    if (order !== undefined) productType.order = order;
-    if (isActive !== undefined) productType.isActive = isActive;
+    const updateData: Record<string, unknown> = {};
+    if (name) {
+      updateData.name = name;
+      updateData.slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+    }
+    if (type && ['service', 'physical'].includes(type)) updateData.type = type as ProductKind;
+    if (description !== undefined) updateData.description = description;
+    if (order !== undefined) updateData.order = order;
+    if (isActive !== undefined) updateData.isActive = isActive;
 
-    await productType.save();
+    const productType = await prisma.productType.update({
+      where: { id },
+      data: updateData,
+    });
 
     return NextResponse.json({
       success: true,
@@ -89,7 +97,12 @@ export async function PUT(
         { status: 403 }
       );
     }
-    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code: string }).code === 'P2002'
+    ) {
       return NextResponse.json(
         { success: false, error: 'Product type with this name already exists' },
         { status: 400 }
@@ -115,16 +128,24 @@ export async function DELETE(
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
 
     const { id } = await params;
-    const productType = await ProductType.findByIdAndDelete(id);
 
-    if (!productType) {
-      return NextResponse.json(
-        { success: false, error: 'Product type not found' },
-        { status: 404 }
-      );
+    try {
+      await prisma.productType.delete({ where: { id } });
+    } catch (deleteError: unknown) {
+      if (
+        typeof deleteError === 'object' &&
+        deleteError !== null &&
+        'code' in deleteError &&
+        (deleteError as { code: string }).code === 'P2025'
+      ) {
+        return NextResponse.json(
+          { success: false, error: 'Product type not found' },
+          { status: 404 }
+        );
+      }
+      throw deleteError;
     }
 
     return NextResponse.json({
@@ -148,4 +169,3 @@ export async function DELETE(
     );
   }
 }
-

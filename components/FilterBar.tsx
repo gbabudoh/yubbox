@@ -8,7 +8,7 @@ import { useI18n } from '@/lib/i18n-context';
 
 // Define the Category interface based on usage
 interface Category {
-  _id: string;
+  id: string;
   name: string;
   slug: string;
   type: 'product' | 'service';
@@ -72,7 +72,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const currentCategory = categories.find((c) => c._id === tempCategory);
+  const currentCategory = categories.find((c) => c.id === tempCategory);
 
   return (
     <div className={cn("glass-morphism rounded-2xl p-2 sticky top-24 z-30 shadow-lg", className)}>
@@ -201,14 +201,14 @@ const FilterBar: React.FC<FilterBarProps> = ({
               </button>
               {filteredCategories.map((cat) => (
                 <button
-                  key={cat._id}
+                  key={cat.id}
                   onClick={() => {
-                    setTempCategory(cat._id);
+                    setTempCategory(cat.id);
                     setIsCategoryOpen(false);
                   }}
                   className={cn(
                     "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between",
-                    tempCategory === cat._id ? "bg-[#790e61]/5 text-[#790e61] font-medium" : "text-gray-600 hover:bg-gray-50"
+                    tempCategory === cat.id ? "bg-[#790e61]/5 text-[#790e61] font-medium" : "text-gray-600 hover:bg-gray-50"
                   )}
                 >
                   <div className="flex items-center gap-2">
@@ -219,7 +219,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                     )}
                     <span>{cat.name}</span>
                   </div>
-                  {tempCategory === cat._id && <Check className="w-3.5 h-3.5" />}
+                  {tempCategory === cat.id && <Check className="w-3.5 h-3.5" />}
                 </button>
               ))}
               {filteredCategories.length === 0 && (
@@ -240,14 +240,14 @@ const FilterBar: React.FC<FilterBarProps> = ({
            />
         </div>
 
-        {/* GO Button */}
+        {/* Apply Filters Button */}
         <button
           onClick={handleGoClick}
-          className="bg-[#790e61] hover:bg-[#9d1b7f] text-white px-4 py-1.5 rounded-full transition-all shadow-md hover:shadow-[#790e61]/30 hover:scale-105 active:scale-95 flex items-center justify-center gap-1.5 group"
+          className="bg-[#790e61] hover:bg-[#9d1b7f] text-white px-6 py-2.5 rounded-xl transition-all shadow-md hover:shadow-[#790e61]/30 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 group whitespace-nowrap"
           title="Apply Filters"
         >
-          <span className="font-bold text-[10px] tracking-wider">{t('common.go')}</span>
-          <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+          <span className="font-bold text-sm">{t('common.go')}</span>
+          <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
         </button>
       </div>
     </div>

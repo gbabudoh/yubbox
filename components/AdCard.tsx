@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart, MapPin, Building, User, Clock, Globe, ArrowUpRight } from 'lucide-react';
+import { Heart, MapPin, Building, User, Clock, Globe, ArrowUpRight, Sparkles } from 'lucide-react';
 import { IAd } from '@/types/models';
 import { cn } from '@/lib/utils';
 import { getCountryByCode } from '@/lib/countries';
@@ -31,7 +31,7 @@ const AdCard: React.FC<AdCardProps> = ({ ad, className }) => {
       new Date(ad.expiryDate) >= new Date() &&
       ad.isActive
     ) {
-      analyticsService.trackEvent(String(ad._id), 'view', {
+      analyticsService.trackEvent(ad.id, 'view', {
         userAgent: typeof window !== 'undefined' ? navigator.userAgent : '',
         referrer: typeof window !== 'undefined' ? document.referrer : '',
       });
@@ -44,7 +44,7 @@ const AdCard: React.FC<AdCardProps> = ({ ad, className }) => {
     if (isVoting) return;
     
     // Check if it's a mock ad
-    const isMock = MOCK_ADS.some(m => String(m._id) === String(ad._id));
+    const isMock = MOCK_ADS.some(m => m.id === ad.id);
     if (isMock) {
       setYc(prev => prev + 1);
       return;
@@ -52,7 +52,7 @@ const AdCard: React.FC<AdCardProps> = ({ ad, className }) => {
 
     try {
       setIsVoting(true);
-      const newCount = await adService.voteAd(String(ad._id));
+      const newCount = await adService.voteAd(ad.id);
       setYc(newCount);
     } catch (error) {
       console.error('Failed to vote:', error);
@@ -68,7 +68,7 @@ const AdCard: React.FC<AdCardProps> = ({ ad, className }) => {
 
   return (
     <div className={cn('group relative h-full', className)}>
-      <Link href={`/ads/${ad._id}`}>
+      <Link href={`/ads/${ad.id}`}>
         <div className="glass-card rounded-[2rem] overflow-hidden h-full flex flex-col group/card">
           {/* Image Section */}
           <div className="relative w-full aspect-[4/3] overflow-hidden">
@@ -92,6 +92,15 @@ const AdCard: React.FC<AdCardProps> = ({ ad, className }) => {
                 <Heart className={cn("w-3.5 h-3.5", isVoting && "animate-pulse")} fill="currentColor" />
                 <span>{yc} <span className="opacity-70 font-normal">yc</span></span>
               </div>
+              {ad.topLensExpiry && new Date(ad.topLensExpiry) >= new Date() && (
+                <div
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-full text-white text-[10px] font-black tracking-wider uppercase w-fit"
+                  style={{ background: 'linear-gradient(135deg, #790e61, #c41e8a)', boxShadow: '0 2px 8px rgba(121,14,97,0.4)' }}
+                >
+                  <Sparkles className="w-2.5 h-2.5" />
+                  Top Lens
+                </div>
+              )}
             </div>
 
             {/* Country Flags */}
@@ -118,7 +127,7 @@ const AdCard: React.FC<AdCardProps> = ({ ad, className }) => {
           {/* Content Section */}
           <div className="p-6 flex flex-col flex-1">
             <div className="mb-4">
-              <h3 className="text-xl font-bold text-neutral-900 mb-2 line-clamp-1 group-hover/card:text-indigo-600 transition-colors">
+              <h3 className="text-xl font-bold text-neutral-900 mb-2 line-clamp-1 group-hover/card:text-[#790e61] transition-colors">
                 {ad.title}
               </h3>
               <p className="text-sm text-neutral-500 line-clamp-2 leading-relaxed">
@@ -141,9 +150,9 @@ const AdCard: React.FC<AdCardProps> = ({ ad, className }) => {
             {/* Footer Section */}
             <div className="mt-auto pt-6 border-t border-neutral-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 p-[2px]">
+                <div className="w-8 h-8 rounded-full p-[2px]" style={{ background: 'linear-gradient(135deg, #790e61, #c41e8a)' }}>
                   <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
-                    <User className="w-4 h-4 text-indigo-500" />
+                    <User className="w-4 h-4" style={{ color: '#790e61' }} />
                   </div>
                 </div>
                 <div className="flex flex-col">

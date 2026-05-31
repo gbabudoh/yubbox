@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth';
-import dbConnect from '@/lib/dbConnect';
-import Review from '@/models/Review';
-import Ad from '@/models/Ad';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
-    await dbConnect();
-
     const searchParams = request.nextUrl.searchParams;
     const adId = searchParams.get('adId');
 
@@ -19,9 +15,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const reviews = await Review.find({ adId })
-      .populate('userId', 'name email')
-      .sort({ createdAt: -1 });
+    const reviews = await prisma.review.findMany({
+      where: { adId },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
 
     return NextResponse.json({
       success: true,
@@ -42,7 +42,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    await dbConnect();
 
     const body = await request.json();
     const { adId, rating, comment, userName } = body;
@@ -63,7 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify ad exists
-    const ad = await Ad.findById(adId);
+    const ad = await prisma.ad.findUnique({ where: { id: adId } });
     if (!ad) {
       return NextResponse.json(
         { success: false, error: 'Ad not found' },
@@ -71,23 +70,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const review = await Review.create({
-      adId,
-      rating,
-      comment: comment || '',
-      userId: session?.user?.id || null,
-      userName: userName || session?.user?.name || 'Anonymous',
+    const review = await prisma.review.create({
+      data: {
+        adId,
+        rating,
+        comment: comment || '',
+        userId: session?.user?.id || null,
+        userName: userName || session?.user?.name || 'Anonymous',
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
     });
-
-    const populatedReview = await Review.findById(review._id).populate(
-      'userId',
-      'name email'
-    );
 
     return NextResponse.json(
       {
         success: true,
-        data: populatedReview,
+        data: review,
       },
       { status: 201 }
     );
@@ -102,4 +101,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

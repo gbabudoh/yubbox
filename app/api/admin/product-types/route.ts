@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin';
-import dbConnect from '@/lib/dbConnect';
-import ProductType from '@/models/ProductType';
+import { prisma } from '@/lib/prisma';
+import { ProductKind } from '@prisma/client';
 
 /**
  * GET - Get all product types
@@ -9,21 +9,23 @@ import ProductType from '@/models/ProductType';
 export async function GET(request: NextRequest) {
   try {
     await requireAdmin();
-    await dbConnect();
 
     const searchParams = request.nextUrl.searchParams;
     const includeInactive = searchParams.get('includeInactive') === 'true';
     const type = searchParams.get('type'); // 'service' or 'physical'
 
-    const query: { isActive?: boolean; type?: string } = {};
+    const where: { isActive?: boolean; type?: ProductKind } = {};
     if (!includeInactive) {
-      query.isActive = true;
+      where.isActive = true;
     }
-    if (type) {
-      query.type = type;
+    if (type && ['service', 'physical'].includes(type)) {
+      where.type = type as ProductKind;
     }
 
-    const productTypes = await ProductType.find(query).sort({ order: 1, name: 1 });
+    const productTypes = await prisma.productType.findMany({
+      where,
+      orderBy: [{ order: 'asc' }, { name: 'asc' }],
+    });
 
     return NextResponse.json({
       success: true,
@@ -53,7 +55,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await requireAdmin();
-    await dbConnect();
 
     const body = await request.json();
     const { name, type, description, order, isActive } = body;
@@ -72,12 +73,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const productType = await ProductType.create({
-      name,
-      type,
-      description,
-      order: order || 0,
-      isActive: isActive !== undefined ? isActive : true,
+    // Auto-generate slug from name
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    const productType = await prisma.productType.create({
+      data: {
+        name,
+        slug,
+        type: type as ProductKind,
+        description,
+        order: order || 0,
+        isActive: isActive !== undefined ? isActive : true,
+      },
     });
 
     return NextResponse.json(
@@ -94,7 +104,12 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
-    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code: string }).code === 'P2002'
+    ) {
       return NextResponse.json(
         { success: false, error: 'Product type with this name already exists' },
         { status: 400 }
@@ -110,4 +125,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

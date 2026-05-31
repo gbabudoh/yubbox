@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin';
-import dbConnect from '@/lib/dbConnect';
-import BannerAd from '@/models/BannerAd';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
 
-    const bannerAd = await BannerAd.findById(params.id).populate('createdBy', 'name email');
+    const { id } = await params;
+    const bannerAd = await prisma.bannerAd.findUnique({
+      where: { id },
+      include: {
+        createdBy: { select: { id: true, name: true, email: true } },
+      },
+    });
 
     if (!bannerAd) {
       return NextResponse.json(
@@ -44,12 +48,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
 
+    const { id } = await params;
     const body = await request.json();
     const { title, description, imageUrl, linkUrl, cost, startDate, endDate, isActive, displayOrder } = body;
 
@@ -65,17 +69,7 @@ export async function PUT(
       }
     }
 
-    const updateData: {
-      title?: string;
-      description?: string;
-      imageUrl?: string;
-      linkUrl?: string;
-      cost?: number;
-      startDate?: Date;
-      endDate?: Date;
-      isActive?: boolean;
-      displayOrder?: number;
-    } = {};
+    const updateData: Record<string, unknown> = {};
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
@@ -86,17 +80,28 @@ export async function PUT(
     if (isActive !== undefined) updateData.isActive = isActive;
     if (displayOrder !== undefined) updateData.displayOrder = displayOrder;
 
-    const bannerAd = await BannerAd.findByIdAndUpdate(
-      params.id,
-      updateData,
-      { new: true, runValidators: true }
-    ).populate('createdBy', 'name email');
-
-    if (!bannerAd) {
-      return NextResponse.json(
-        { success: false, error: 'Banner ad not found' },
-        { status: 404 }
-      );
+    let bannerAd;
+    try {
+      bannerAd = await prisma.bannerAd.update({
+        where: { id },
+        data: updateData,
+        include: {
+          createdBy: { select: { id: true, name: true, email: true } },
+        },
+      });
+    } catch (updateError: unknown) {
+      if (
+        typeof updateError === 'object' &&
+        updateError !== null &&
+        'code' in updateError &&
+        (updateError as { code: string }).code === 'P2025'
+      ) {
+        return NextResponse.json(
+          { success: false, error: 'Banner ad not found' },
+          { status: 404 }
+        );
+      }
+      throw updateError;
     }
 
     return NextResponse.json({
@@ -123,19 +128,28 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
 
-    const bannerAd = await BannerAd.findByIdAndDelete(params.id);
+    const { id } = await params;
 
-    if (!bannerAd) {
-      return NextResponse.json(
-        { success: false, error: 'Banner ad not found' },
-        { status: 404 }
-      );
+    try {
+      await prisma.bannerAd.delete({ where: { id } });
+    } catch (deleteError: unknown) {
+      if (
+        typeof deleteError === 'object' &&
+        deleteError !== null &&
+        'code' in deleteError &&
+        (deleteError as { code: string }).code === 'P2025'
+      ) {
+        return NextResponse.json(
+          { success: false, error: 'Banner ad not found' },
+          { status: 404 }
+        );
+      }
+      throw deleteError;
     }
 
     return NextResponse.json({

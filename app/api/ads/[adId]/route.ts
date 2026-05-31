@@ -1,30 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth';
-import dbConnect from '@/lib/dbConnect';
-import Ad from '@/models/Ad';
+import { prisma } from '@/lib/prisma';
+
+const AD_INCLUDE = {
+  user: { select: { id: true, name: true, email: true } },
+  category: { select: { id: true, name: true, slug: true, type: true } },
+  industry: { select: { id: true, name: true, slug: true } },
+};
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ adId: string }> }
 ) {
   try {
-    await dbConnect();
-
     const { adId } = await params;
-    // Populate safely
-    let ad;
-    try {
-      ad = await Ad.findById(adId)
-        .populate('userId', 'name email')
-        .populate('categoryId', 'name slug')
-        .populate('industryId', 'name slug')
-        .populate('productTypeId', 'name slug type');
-    } catch {
-      // If populate fails, use basic populate
-      ad = await Ad.findById(adId)
-        .populate('userId', 'name email');
-    }
+
+    const ad = await prisma.ad.findUnique({
+      where: { id: adId },
+      include: AD_INCLUDE,
+    });
 
     if (!ad) {
       return NextResponse.json(
@@ -62,12 +57,10 @@ export async function PUT(
       );
     }
 
-    await dbConnect();
-
     const { adId } = await params;
-    const ad = await Ad.findById(adId);
+    const existing = await prisma.ad.findUnique({ where: { id: adId } });
 
-    if (!ad) {
+    if (!existing) {
       return NextResponse.json(
         { success: false, error: 'Ad not found' },
         { status: 404 }
@@ -75,7 +68,7 @@ export async function PUT(
     }
 
     // Check if user owns the ad
-    if (ad.userId.toString() !== session.user.id) {
+    if (existing.userId !== session.user.id) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 403 }
@@ -88,54 +81,45 @@ export async function PUT(
     const imageUrl = formData.get('imageUrl') as string;
     const webLink = formData.get('webLink') as string;
     // Support both countries and targetLocations for backward compatibility
-    const countries = formData.getAll('countries').length > 0 
+    const countries = formData.getAll('countries').length > 0
       ? formData.getAll('countries') as string[]
       : formData.getAll('targetLocations') as string[];
     const isTopLens = formData.get('isTopLens') === 'true';
     const isStories = formData.get('isStories') === 'true';
 
-    // Update ad
-    ad.title = title || ad.title;
-    ad.description = description || ad.description;
-    ad.imageUrl = imageUrl || ad.imageUrl;
-    ad.webLink = webLink || ad.webLink;
-    if (countries.length > 0) {
-      ad.countries = countries;
-    }
-
-    // Handle premium feature updates
-    // If selecting Top Lens/Stories for an existing ad, set expiry to match standard ad expiry
-    if (isTopLens && !ad.topLensExpiry) {
-      ad.topLensExpiry = ad.expiryDate;
+    // Handle premium feature expiry updates
+    let topLensExpiry: Date | null | undefined = undefined;
+    if (isTopLens && !existing.topLensExpiry) {
+      topLensExpiry = existing.expiryDate;
     } else if (!isTopLens) {
-      ad.topLensExpiry = undefined;
+      topLensExpiry = null;
     }
 
-    if (isStories && !ad.storiesExpiry) {
-      ad.storiesExpiry = ad.expiryDate;
+    let storiesExpiry: Date | null | undefined = undefined;
+    if (isStories && !existing.storiesExpiry) {
+      storiesExpiry = existing.expiryDate;
     } else if (!isStories) {
-      ad.storiesExpiry = undefined;
+      storiesExpiry = null;
     }
 
-    await ad.save();
+    const updateData: Record<string, unknown> = {};
+    if (title) updateData.title = title;
+    if (description) updateData.description = description;
+    if (imageUrl) updateData.imageUrl = imageUrl;
+    if (webLink) updateData.webLink = webLink;
+    if (countries.length > 0) updateData.countries = countries;
+    if (topLensExpiry !== undefined) updateData.topLensExpiry = topLensExpiry;
+    if (storiesExpiry !== undefined) updateData.storiesExpiry = storiesExpiry;
 
-    // Populate safely
-    let populatedAd;
-    try {
-      populatedAd = await Ad.findById(adId)
-        .populate('userId', 'name email')
-        .populate('categoryId', 'name slug')
-        .populate('industryId', 'name slug')
-        .populate('productTypeId', 'name slug type');
-    } catch {
-      // If populate fails, use basic populate
-      populatedAd = await Ad.findById(adId)
-        .populate('userId', 'name email');
-    }
+    const ad = await prisma.ad.update({
+      where: { id: adId },
+      data: updateData,
+      include: AD_INCLUDE,
+    });
 
     return NextResponse.json({
       success: true,
-      data: populatedAd,
+      data: ad,
     });
   } catch (error: unknown) {
     return NextResponse.json(
@@ -162,12 +146,10 @@ export async function DELETE(
       );
     }
 
-    await dbConnect();
-
     const { adId } = await params;
-    const ad = await Ad.findById(adId);
+    const existing = await prisma.ad.findUnique({ where: { id: adId } });
 
-    if (!ad) {
+    if (!existing) {
       return NextResponse.json(
         { success: false, error: 'Ad not found' },
         { status: 404 }
@@ -175,14 +157,14 @@ export async function DELETE(
     }
 
     // Check if user owns the ad
-    if (ad.userId.toString() !== session.user.id) {
+    if (existing.userId !== session.user.id) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 403 }
       );
     }
 
-    await Ad.findByIdAndDelete(adId);
+    await prisma.ad.delete({ where: { id: adId } });
 
     return NextResponse.json({
       success: true,
@@ -198,4 +180,3 @@ export async function DELETE(
     );
   }
 }
-

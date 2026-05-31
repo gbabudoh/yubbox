@@ -1,14 +1,14 @@
 import { IAd } from '@/types/models';
-import mongoose from 'mongoose';
 
-const mockUserId = new mongoose.Types.ObjectId();
-const mockCategoryProduct = new mongoose.Types.ObjectId();
-const mockCategoryService = new mongoose.Types.ObjectId();
-const mockIndustry = new mongoose.Types.ObjectId();
+// Fixed UUIDs — consistent across module evaluations and page navigations
+const mockUserId          = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+const mockCategoryProduct = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+const mockCategoryService = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+const mockIndustry        = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 
 export const MOCK_ADS: Partial<IAd>[] = [
   {
-    _id: new mongoose.Types.ObjectId(),
+    id: '11111111-1111-1111-1111-111111111111',
     title: 'Precision Emerald Timepiece',
     description: 'Expertly crafted luxury watch with an emerald green sunburst dial and premium leather strap. A masterpiece of horology for the discerning collector.',
     imageUrl: '/images/watch.png',
@@ -17,9 +17,9 @@ export const MOCK_ADS: Partial<IAd>[] = [
     location: 'Geneva, Switzerland',
     companyName: 'Wilson & Co. Horology',
     countries: ['CH', 'GB', 'US'],
-    categoryId: mockCategoryProduct as unknown as mongoose.Types.ObjectId,
-    industryId: mockIndustry as unknown as mongoose.Types.ObjectId,
-    userId: mockUserId as unknown as mongoose.Types.ObjectId,
+    categoryId: mockCategoryProduct,
+    industryId: mockIndustry,
+    userId: mockUserId,
     isActive: true,
     isPaid: true,
     yubboxCount: 124,
@@ -28,7 +28,7 @@ export const MOCK_ADS: Partial<IAd>[] = [
     updatedAt: new Date(),
   },
   {
-    _id: new mongoose.Types.ObjectId(),
+    id: '22222222-2222-2222-2222-222222222222',
     title: 'Next-Gen Quantum Smartphone',
     description: 'Experience the future with our most powerful smartphone yet. Featuring a 240Hz holographic display and advanced neural processing unit.',
     imageUrl: '/images/phone.png',
@@ -37,9 +37,9 @@ export const MOCK_ADS: Partial<IAd>[] = [
     location: 'Silicon Valley, CA',
     companyName: 'Quantum Tech Labs',
     countries: ['US', 'JP', 'KR'],
-    categoryId: mockCategoryProduct as unknown as mongoose.Types.ObjectId,
-    industryId: mockIndustry as unknown as mongoose.Types.ObjectId,
-    userId: mockUserId as unknown as mongoose.Types.ObjectId,
+    categoryId: mockCategoryProduct,
+    industryId: mockIndustry,
+    userId: mockUserId,
     isActive: true,
     isPaid: true,
     yubboxCount: 89,
@@ -48,18 +48,18 @@ export const MOCK_ADS: Partial<IAd>[] = [
     updatedAt: new Date(),
   },
   {
-    _id: new mongoose.Types.ObjectId(),
+    id: '33333333-3333-3333-3333-333333333333',
     title: 'Global Digital Growth Strategy',
-    description: 'Scaled your business globally with our data-driven digital marketing solutions. Specialized in SEO, PPC, and cross-border e-commerce transformation.',
+    description: 'Scale your business globally with our data-driven digital marketing solutions. Specialized in SEO, PPC, and cross-border e-commerce transformation.',
     imageUrl: '/images/digital.png',
     webLink: 'https://yubbox.com',
     ownerName: 'Robert Vance',
     location: 'London, UK',
     companyName: 'Vance Digital Agency',
     countries: ['GB', 'DE', 'FR', 'AE'],
-    categoryId: mockCategoryService as unknown as mongoose.Types.ObjectId,
-    industryId: mockIndustry as unknown as mongoose.Types.ObjectId,
-    userId: mockUserId as unknown as mongoose.Types.ObjectId,
+    categoryId: mockCategoryService,
+    industryId: mockIndustry,
+    userId: mockUserId,
     isActive: true,
     isPaid: true,
     yubboxCount: 256,
@@ -68,7 +68,7 @@ export const MOCK_ADS: Partial<IAd>[] = [
     updatedAt: new Date(),
   },
   {
-    _id: new mongoose.Types.ObjectId(),
+    id: '44444444-4444-4444-4444-444444444444',
     title: 'Sustainable Smart Home Hub',
     description: 'The central brain for your eco-friendly home. Monitor energy usage, control appliances, and optimize your carbon footprint with AI insights.',
     imageUrl: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=800&q=80',
@@ -77,9 +77,9 @@ export const MOCK_ADS: Partial<IAd>[] = [
     location: 'Madrid, Spain',
     companyName: 'EcoSmart Solutions',
     countries: ['ES', 'PT', 'FR'],
-    categoryId: mockCategoryProduct as unknown as mongoose.Types.ObjectId,
-    industryId: mockIndustry as unknown as mongoose.Types.ObjectId,
-    userId: mockUserId as unknown as mongoose.Types.ObjectId,
+    categoryId: mockCategoryProduct,
+    industryId: mockIndustry,
+    userId: mockUserId,
     isActive: true,
     isPaid: true,
     yubboxCount: 45,
@@ -88,18 +88,18 @@ export const MOCK_ADS: Partial<IAd>[] = [
     updatedAt: new Date(),
   },
   {
-    _id: new mongoose.Types.ObjectId(),
+    id: '55555555-5555-5555-5555-555555555555',
     title: 'Artisan Coffee Roasters Collective',
     description: 'Direct trade beans sourced from family-owned farms. Roasted in small batches to preserve unique regional flavor profiles and aromas.',
     imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=80',
     webLink: 'https://yubbox.com',
     ownerName: 'Marco Rossi',
     location: 'Florence, Italy',
-    companyName: 'L’Artigiano Coffee',
+    companyName: "L'Artigiano Coffee",
     countries: ['IT', 'AT', 'CH'],
-    categoryId: mockCategoryProduct as unknown as mongoose.Types.ObjectId,
-    industryId: mockIndustry as unknown as mongoose.Types.ObjectId,
-    userId: mockUserId as unknown as mongoose.Types.ObjectId,
+    categoryId: mockCategoryProduct,
+    industryId: mockIndustry,
+    userId: mockUserId,
     isActive: true,
     isPaid: true,
     yubboxCount: 78,
@@ -108,7 +108,7 @@ export const MOCK_ADS: Partial<IAd>[] = [
     updatedAt: new Date(),
   },
   {
-    _id: new mongoose.Types.ObjectId(),
+    id: '66666666-6666-6666-6666-666666666666',
     title: 'CloudScale Infrastructure Management',
     description: 'Enterprise-grade cloud solutions powered by AI. Optimize your server costs, enhance security, and scale your applications globally with 99.99% uptime.',
     imageUrl: '/images/cloud.png',
@@ -117,9 +117,9 @@ export const MOCK_ADS: Partial<IAd>[] = [
     location: 'Austin, TX',
     companyName: 'CloudScale Systems',
     countries: ['US', 'CA', 'GB'],
-    categoryId: mockCategoryService as unknown as mongoose.Types.ObjectId,
-    industryId: mockIndustry as unknown as mongoose.Types.ObjectId,
-    userId: mockUserId as unknown as mongoose.Types.ObjectId,
+    categoryId: mockCategoryService,
+    industryId: mockIndustry,
+    userId: mockUserId,
     isActive: true,
     isPaid: true,
     yubboxCount: 142,
@@ -128,18 +128,18 @@ export const MOCK_ADS: Partial<IAd>[] = [
     updatedAt: new Date(),
   },
   {
-    _id: new mongoose.Types.ObjectId(),
+    id: '77777777-7777-7777-7777-777777777777',
     title: 'Aura Architectural Design Studio',
-    description: 'We create living spaces that inspire. specialized in luxury residential projects and sustainable commercial spaces with a focus on natural light.',
+    description: 'We create living spaces that inspire. Specialized in luxury residential projects and sustainable commercial spaces with a focus on natural light.',
     imageUrl: '/images/architecture.png',
     webLink: 'https://yubbox.com',
     ownerName: 'Sophie Larousse',
     location: 'Paris, France',
     companyName: 'Aura Design',
     countries: ['FR', 'BE', 'LU'],
-    categoryId: mockCategoryService as unknown as mongoose.Types.ObjectId,
-    industryId: mockIndustry as unknown as mongoose.Types.ObjectId,
-    userId: mockUserId as unknown as mongoose.Types.ObjectId,
+    categoryId: mockCategoryService,
+    industryId: mockIndustry,
+    userId: mockUserId,
     isActive: true,
     isPaid: true,
     yubboxCount: 187,
@@ -148,7 +148,7 @@ export const MOCK_ADS: Partial<IAd>[] = [
     updatedAt: new Date(),
   },
   {
-    _id: new mongoose.Types.ObjectId(),
+    id: '88888888-8888-8888-8888-888888888888',
     title: 'Serenity Wellness Coaching',
     description: 'Transform your life with personalized wellness plans. We offer integrated physical health and mental clarity coaching in premium studio environments.',
     imageUrl: '/images/wellness.png',
@@ -157,19 +157,19 @@ export const MOCK_ADS: Partial<IAd>[] = [
     location: 'Vancouver, Canada',
     companyName: 'Serenity Wellness',
     countries: ['CA', 'US', 'AU'],
-    categoryId: mockCategoryService as unknown as mongoose.Types.ObjectId,
-    industryId: mockIndustry as unknown as mongoose.Types.ObjectId,
-    userId: mockUserId as unknown as mongoose.Types.ObjectId,
+    categoryId: mockCategoryService,
+    industryId: mockIndustry,
+    userId: mockUserId,
     isActive: true,
     isPaid: true,
     yubboxCount: 95,
     expiryDate: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000),
     createdAt: new Date(),
     updatedAt: new Date(),
-  }
+  },
 ];
 
 export const MOCK_CATEGORIES = [
-  { _id: String(mockCategoryProduct), name: 'Premium Products', slug: 'products', type: 'product' as const },
-  { _id: String(mockCategoryService), name: 'Strategic Services', slug: 'services', type: 'service' as const }
+  { id: mockCategoryProduct, name: 'Premium Products', slug: 'products', type: 'product' as const },
+  { id: mockCategoryService, name: 'Strategic Services', slug: 'services', type: 'service' as const },
 ];

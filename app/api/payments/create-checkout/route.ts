@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth';
-import dbConnect from '@/lib/dbConnect';
-import Ad from '@/models/Ad';
-import Payment from '@/models/Payment';
+import { prisma } from '@/lib/prisma';
 import { stripe, AD_PRICE, AD_DURATION_DAYS, CURRENCY, dollarsToCents } from '@/lib/stripe';
 
 /**
@@ -20,8 +18,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await dbConnect();
-
     const body = await request.json();
     const { adId, isRelist = false } = body;
 
@@ -33,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find the ad
-    const ad = await Ad.findById(adId);
+    const ad = await prisma.ad.findUnique({ where: { id: adId } });
 
     if (!ad) {
       return NextResponse.json(
@@ -43,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user owns the ad
-    if (ad.userId.toString() !== session.user.id) {
+    if (ad.userId !== session.user.id) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 403 }
@@ -56,14 +52,16 @@ export async function POST(request: NextRequest) {
     expiryDate.setHours(23, 59, 59, 999);
 
     // Create pending payment record
-    const payment = await Payment.create({
-      adId: ad._id,
-      userId: session.user.id,
-      amount: AD_PRICE,
-      currency: 'USD',
-      status: 'pending',
-      paymentMethod: 'stripe',
-      expiryDate,
+    const payment = await prisma.payment.create({
+      data: {
+        adId,
+        userId: session.user.id,
+        amount: AD_PRICE,
+        currency: 'USD',
+        status: 'pending',
+        paymentMethod: 'stripe',
+        expiryDate,
+      },
     });
 
     // Create Stripe Checkout Session
@@ -75,8 +73,8 @@ export async function POST(request: NextRequest) {
             currency: CURRENCY,
             product_data: {
               name: isRelist ? `Relist Yubbox: ${ad.title}` : `Yubbox Listing: ${ad.title}`,
-              description: isRelist 
-                ? `Relist your Yubbox for ${AD_DURATION_DAYS} days` 
+              description: isRelist
+                ? `Relist your Yubbox for ${AD_DURATION_DAYS} days`
                 : `Activate your Yubbox listing for ${AD_DURATION_DAYS} days`,
             },
             unit_amount: dollarsToCents(AD_PRICE),
@@ -87,25 +85,27 @@ export async function POST(request: NextRequest) {
       mode: 'payment',
       success_url: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/payment/cancel?adId=${adId}`,
-      client_reference_id: payment._id.toString(),
+      client_reference_id: payment.id,
       metadata: {
-        adId: ad._id.toString(),
+        adId,
         userId: session.user.id,
-        paymentId: payment._id.toString(),
+        paymentId: payment.id,
         isRelist: isRelist.toString(),
       },
     });
 
     // Update payment with Stripe session ID
-    payment.transactionId = checkoutSession.id;
-    await payment.save();
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { transactionId: checkoutSession.id },
+    });
 
     return NextResponse.json({
       success: true,
       data: {
         sessionId: checkoutSession.id,
         url: checkoutSession.url,
-        paymentId: payment._id,
+        paymentId: payment.id,
       },
     });
   } catch (error: unknown) {
@@ -120,4 +120,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

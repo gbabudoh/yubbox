@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
-import User, { IUser } from '@/models/User';
+import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
-    await dbConnect();
-
     const body = await request.json();
     const { name, email, password } = body;
 
@@ -25,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return NextResponse.json(
         { success: false, error: 'User already exists with this email' },
@@ -33,18 +31,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create user (password will be hashed by the pre-save hook)
-    const user = await User.create({
-      name,
-      email,
-      password,
-    }) as IUser;
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+      },
+    });
 
     return NextResponse.json(
       {
         success: true,
         data: {
-          id: String(user._id),
+          id: user.id,
           name: user.name,
           email: user.email,
         },
@@ -62,4 +65,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

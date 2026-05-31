@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { stripe } from '@/lib/stripe';
-import dbConnect from '@/lib/dbConnect';
-import Ad from '@/models/Ad';
-import Payment from '@/models/Payment';
+import { prisma } from '@/lib/prisma';
 
 const AD_DURATION_DAYS = 14;
 
@@ -61,7 +59,6 @@ export async function POST(request: NextRequest) {
       const paymentId = metadata.paymentId;
       const adId = metadata.adId;
       const userId = metadata.userId;
-      // const isRelist = session.metadata?.isRelist === 'true'; // Keep for logic but comment out if unused to fix lint
 
       if (!paymentId || !adId || !userId) {
         console.error('❌ Missing metadata in checkout session:', session.id);
@@ -74,10 +71,8 @@ export async function POST(request: NextRequest) {
 
       console.log(`🔍 Processing payment: ${paymentId} for ad: ${adId}`);
 
-      await dbConnect();
-
       // Find the payment record
-      const payment = await Payment.findById(paymentId);
+      const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
       if (!payment) {
         console.error('❌ Payment not found:', paymentId);
         return NextResponse.json(
@@ -89,7 +84,7 @@ export async function POST(request: NextRequest) {
       console.log(`✅ Found payment: ${paymentId}, current status: ${payment.status}`);
 
       // Find the ad
-      const ad = await Ad.findById(adId);
+      const ad = await prisma.ad.findUnique({ where: { id: adId } });
       if (!ad) {
         console.error('❌ Ad not found:', adId);
         return NextResponse.json(
@@ -107,18 +102,26 @@ export async function POST(request: NextRequest) {
       expiryDate.setHours(23, 59, 59, 999);
 
       // Update payment record
-      payment.status = 'completed';
-      payment.transactionId = session.id as string;
-      payment.paymentDate = paymentDate;
-      payment.expiryDate = expiryDate;
-      await payment.save();
+      await prisma.payment.update({
+        where: { id: paymentId },
+        data: {
+          status: 'completed',
+          transactionId: session.id as string,
+          paymentDate,
+          expiryDate,
+        },
+      });
 
       // Update ad with payment info
-      ad.isPaid = true;
-      ad.paymentDate = paymentDate;
-      ad.expiryDate = expiryDate;
-      ad.isActive = true;
-      await ad.save();
+      await prisma.ad.update({
+        where: { id: adId },
+        data: {
+          isPaid: true,
+          paymentDate,
+          expiryDate,
+          isActive: true,
+        },
+      });
 
       console.log(`✅ Payment completed for ad ${adId}, payment ${paymentId}`);
       console.log(`✅ Ad ${adId} marked as paid and active`);
@@ -129,12 +132,10 @@ export async function POST(request: NextRequest) {
       const paymentId = metadata.paymentId;
 
       if (paymentId) {
-        await dbConnect();
-        const payment = await Payment.findById(paymentId);
-        if (payment) {
-          payment.status = 'failed';
-          await payment.save();
-        }
+        await prisma.payment.update({
+          where: { id: paymentId },
+          data: { status: 'failed' },
+        });
       }
     }
 
@@ -150,4 +151,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

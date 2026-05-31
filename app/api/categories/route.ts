@@ -1,17 +1,22 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
-import Category from '@/models/Category';
+import { prisma } from '@/lib/prisma';
 
 /**
  * GET - Get all active categories (public endpoint)
  */
 export async function GET() {
   try {
-    await dbConnect();
-
-    const categories = await Category.find({ isActive: true })
-      .select('name slug description type')
-      .sort({ order: 1, name: 1 });
+    const categories = await prisma.category.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        type: true,
+      },
+      orderBy: [{ order: 'asc' }, { name: 'asc' }],
+    });
 
     return NextResponse.json({
       success: true,
@@ -28,4 +33,3 @@ export async function GET() {
     );
   }
 }
-

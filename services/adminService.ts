@@ -3,7 +3,7 @@ import { ApiResponse } from '@/types/general';
 const API_BASE_URL = '/api/admin';
 
 export interface Category {
-  _id: string;
+  id: string;
   name: string;
   slug: string;
   description?: string;
@@ -12,7 +12,7 @@ export interface Category {
 }
 
 export interface Industry {
-  _id: string;
+  id: string;
   name: string;
   slug: string;
   description?: string;
@@ -21,7 +21,7 @@ export interface Industry {
 }
 
 export interface ProductType {
-  _id: string;
+  id: string;
   name: string;
   slug: string;
   type: 'service' | 'physical';
@@ -54,7 +54,7 @@ export const adminService = {
       throw new Error(error.error || 'Failed to create category');
     }
     const data: ApiResponse<Category> = await response.json();
-    return data.data;
+    return data.data!;
   },
 
   async updateCategory(id: string, category: Partial<Category>): Promise<Category> {
@@ -68,7 +68,7 @@ export const adminService = {
       throw new Error(error.error || 'Failed to update category');
     }
     const data: ApiResponse<Category> = await response.json();
-    return data.data;
+    return data.data!;
   },
 
   async deleteCategory(id: string): Promise<void> {
@@ -104,7 +104,7 @@ export const adminService = {
       throw new Error(error.error || 'Failed to create industry');
     }
     const data: ApiResponse<Industry> = await response.json();
-    return data.data;
+    return data.data!;
   },
 
   async updateIndustry(id: string, industry: Partial<Industry>): Promise<Industry> {
@@ -118,7 +118,7 @@ export const adminService = {
       throw new Error(error.error || 'Failed to update industry');
     }
     const data: ApiResponse<Industry> = await response.json();
-    return data.data;
+    return data.data!;
   },
 
   async deleteIndustry(id: string): Promise<void> {
@@ -159,7 +159,7 @@ export const adminService = {
       throw new Error(error.error || 'Failed to create product type');
     }
     const data: ApiResponse<ProductType> = await response.json();
-    return data.data;
+    return data.data!;
   },
 
   async updateProductType(id: string, productType: Partial<ProductType>): Promise<ProductType> {
@@ -173,7 +173,7 @@ export const adminService = {
       throw new Error(error.error || 'Failed to update product type');
     }
     const data: ApiResponse<ProductType> = await response.json();
-    return data.data;
+    return data.data!;
   },
 
   async deleteProductType(id: string): Promise<void> {

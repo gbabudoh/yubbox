@@ -10,7 +10,8 @@ export const adService = {
       : `${API_BASE_URL}?isActive=true`;
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error('Failed to fetch ads');
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.error || `Server error ${response.status}`);
     }
     const data: ApiResponse<IAd[]> = await response.json();
     return data.data || [];

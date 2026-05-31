@@ -1,27 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
-import Ad from '@/models/Ad';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { adId: string } }
+  { params }: { params: Promise<{ adId: string }> }
 ) {
   try {
-    await dbConnect();
-    const { adId } = params;
+    const { adId } = await params;
 
-    const ad = await Ad.findByIdAndUpdate(
-      adId,
-      { $inc: { yubboxCount: 1 } },
-      { new: true }
-    );
-
-    if (!ad) {
-      return NextResponse.json(
-        { success: false, error: 'Ad not found' },
-        { status: 404 }
-      );
-    }
+    const ad = await prisma.ad.update({
+      where: { id: adId },
+      data: { yubboxCount: { increment: 1 } },
+    });
 
     return NextResponse.json({
       success: true,
@@ -31,6 +21,18 @@ export async function POST(
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to vote';
+    // Prisma throws P2025 when record not found on update
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code: string }).code === 'P2025'
+    ) {
+      return NextResponse.json(
+        { success: false, error: 'Ad not found' },
+        { status: 404 }
+      );
+    }
     return NextResponse.json(
       {
         success: false,

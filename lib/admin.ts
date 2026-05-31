@@ -1,7 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from './nextauth';
-import dbConnect from './dbConnect';
-import User from '@/models/User';
+import { prisma } from '@/lib/prisma';
 
 /**
  * Check if the current user is an admin
@@ -9,14 +8,16 @@ import User from '@/models/User';
 export async function isAdmin(): Promise<boolean> {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || !session.user?.id) {
       return false;
     }
 
-    await dbConnect();
-    const user = await User.findById(session.user.id).select('role');
-    
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    });
+
     return user?.role === 'admin';
   } catch (error) {
     console.error('Error checking admin status:', error);
@@ -33,4 +34,3 @@ export async function requireAdmin(): Promise<void> {
     throw new Error('Admin access required');
   }
 }
-

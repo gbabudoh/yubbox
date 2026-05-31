@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { Search, Plus, User, LayoutDashboard, Menu, X, ArrowRight, Rocket } from 'lucide-react';
+import { Search, Plus, User, LayoutDashboard, Menu, X, ArrowRight, Rocket, Globe, BarChart3, Zap } from 'lucide-react';
 import Logo from '@/components/Logo';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useI18n } from '@/lib/i18n-context';
@@ -29,9 +29,29 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchQuery, setSearchQuery }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[100]">
-      {/* Top Tagline Banner */}
-      <div className="w-full text-center py-2 text-sm font-medium text-white" style={{ backgroundColor: 'var(--primary-btn)' }}>
-        yubbox your product and services for global presence
+      {/* Top Value-Prop Banner */}
+      <div className="w-full py-2 text-xs font-semibold text-white overflow-hidden" style={{ backgroundColor: 'var(--primary-btn)' }}>
+        {/* Desktop: 3 pills */}
+        <div className="hidden md:flex items-center justify-center gap-6">
+          <span className="flex items-center gap-1.5 opacity-90">
+            <Globe className="w-3 h-3" />
+            Yubbox your products to 150+ countries
+          </span>
+          <span className="opacity-40">·</span>
+          <span className="flex items-center gap-1.5 opacity-90">
+            <BarChart3 className="w-3 h-3" />
+            Real-Time Analytics
+          </span>
+          <span className="opacity-40">·</span>
+          <span className="flex items-center gap-1.5 opacity-90">
+            <Zap className="w-3 h-3" />
+            Every ad is a Yubbox — from $1
+          </span>
+        </div>
+        {/* Mobile: single concise line */}
+        <div className="md:hidden text-center opacity-90">
+          Yubbox your business globally · From $1
+        </div>
       </div>
       
       <div className="px-4 py-3">
@@ -82,7 +102,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchQuery, setSearchQuery }
               <Link href="/ads/create">
                 <Button className="rounded-full px-4 py-1.5 text-white text-xs flex items-center gap-2 border-none shadow-lg hover:opacity-90" style={{ backgroundColor: 'var(--primary-btn)', boxShadow: '0 4px 14px 0 rgba(121, 14, 97, 0.39)' }}>
                   <Plus className="w-3.5 h-3.5" />
-                  {t('nav.createAd')}
+                  New Yubbox
                 </Button>
               </Link>
             </div>
@@ -153,10 +173,11 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchQuery, setSearchQuery }
                 <Link 
                   href="/ads/create" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center justify-between p-3 bg-indigo-50 border border-indigo-100 rounded-xl transition-colors"
+                  className="flex items-center justify-between p-3 rounded-xl transition-colors"
+                  style={{ background: 'rgba(121,14,97,0.06)', border: '1px solid rgba(121,14,97,0.12)' }}
                 >
-                  <span className="font-medium text-indigo-600">{t('nav.createAd')}</span>
-                  <Plus className="w-4 h-4 text-indigo-600" />
+                  <span className="font-medium" style={{ color: '#790e61' }}>New Yubbox</span>
+                  <Plus className="w-4 h-4" style={{ color: '#790e61' }} />
                 </Link>
               </>
             ) : (

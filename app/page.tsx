@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, Plus } from 'lucide-react';
@@ -10,12 +10,17 @@ import Header from '@/components/Header';
 import BannerAdDisplay from '@/components/BannerAdDisplay';
 import Footer from '@/components/Footer';
 import FilterBar from '@/components/FilterBar';
+import HeroSection from '@/components/HeroSection';
+import WhyYubbox from '@/components/WhyYubbox';
+import HowItWorks from '@/components/HowItWorks';
+import StoriesWidget from '@/components/StoriesWidget';
+import FeaturedSection from '@/components/FeaturedSection';
 import { IAd } from '@/types/models';
 import { adService } from '@/services/adService';
 import { MOCK_ADS, MOCK_CATEGORIES } from '@/lib/mockData';
 
 interface Category {
-  _id: string;
+  id: string;
   name: string;
   slug: string;
   type: 'product' | 'service';
@@ -101,14 +106,13 @@ export default function Home() {
 
       // Type Filter (Product vs Service vs Trending)
       if (selectedType && selectedType !== 'trending') {
-        const adCategory = categories.find(c => c._id === String(ad.categoryId._id || ad.categoryId));
+        const adCategory = categories.find(c => c.id === ad.categoryId);
         if (!adCategory || adCategory.type !== selectedType) return false;
       }
 
       // Category Filter
       if (selectedCategory) {
-        const adCatId = String(ad.categoryId._id || ad.categoryId);
-        if (adCatId !== selectedCategory) return false;
+        if (ad.categoryId !== selectedCategory) return false;
       }
       
       return true;
@@ -118,7 +122,12 @@ export default function Home() {
       if (selectedType === 'trending') {
         return (b.yubboxCount || 0) - (a.yubboxCount || 0);
       }
-      // Otherwise use default sorting (createdAt descending)
+      // Top Lens ads float to the top
+      const now = new Date();
+      const aTopLens = a.topLensExpiry && new Date(a.topLensExpiry) >= now ? 1 : 0;
+      const bTopLens = b.topLensExpiry && new Date(b.topLensExpiry) >= now ? 1 : 0;
+      if (bTopLens !== aTopLens) return bTopLens - aTopLens;
+      // Default: newest first
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
@@ -130,8 +139,27 @@ export default function Home() {
         onSearch={() => {}} 
       />
 
-      <main className="pt-32 pb-20 overflow-hidden min-h-screen bg-gray-50/50">
-        
+      <main className="pt-32 pb-28 overflow-hidden min-h-screen bg-gray-50/50">
+
+        {/* Hero — shown when no filters or search active */}
+        {!searchQuery && !selectedType && !selectedCategory && !selectedCountry && (
+          <>
+            <HeroSection totalAds={ads.length} />
+            <WhyYubbox />
+          </>
+        )}
+
+        {/* Stories Widget */}
+        <StoriesWidget />
+
+        {/* Featured / Top Lens Section */}
+        <FeaturedSection />
+
+        {/* How It Works — shown only on unfiltered homepage */}
+        {!searchQuery && !selectedType && !selectedCategory && !selectedCountry && (
+          <HowItWorks />
+        )}
+
         {/* Top: Images (Banner) */}
         <div className="w-full mb-8">
           <BannerAdDisplay />
@@ -152,13 +180,26 @@ export default function Home() {
 
         {/* Ad Feed Section */}
         <section id="ad-feed" className="max-w-[1600px] mx-auto px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
-              {/* <h2 className="text-3xl md:text-4xl font-black mb-3">Featured Listings</h2> */}
+              <h2 className="text-xl font-black text-neutral-800">
+                {selectedType === 'trending'
+                  ? '🔥 Trending Yubboxes'
+                  : selectedType === 'product'
+                  ? 'Product Yubboxes'
+                  : selectedType === 'service'
+                  ? 'Service Yubboxes'
+                  : 'All Yubboxes'}
+              </h2>
+              {!isLoading && (
+                <p className="text-sm text-neutral-400 mt-0.5">
+                  {filteredAds.length} {filteredAds.length === 1 ? 'Yubbox' : 'Yubboxes'} found
+                </p>
+              )}
             </div>
             {searchQuery && (
               <div className="text-sm font-medium text-neutral-400">
-                Showing {filteredAds.length} results for &quot;{searchQuery}&quot;
+                Results for &quot;{searchQuery}&quot;
               </div>
             )}
           </div>
@@ -172,7 +213,7 @@ export default function Home() {
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-                <div key={i} className="aspect-[4/5] rounded-[2rem] bg-neutral-100 animate-pulse" />
+                <div key={i} className="aspect-4/5 rounded-4xl bg-neutral-100 animate-pulse" />
               ))}
             </div>
           ) : filteredAds.length === 0 ? (
@@ -180,14 +221,14 @@ export default function Home() {
               <div className="w-20 h-20 bg-neutral-50 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Target className="w-10 h-10 text-neutral-200" />
               </div>
-              <h3 className="text-xl font-bold mb-2">No Ads Found</h3>
+              <h3 className="text-xl font-bold mb-2">No Yubboxes Found</h3>
               <p className="text-neutral-500 mb-8 max-w-sm mx-auto">
-                We couldn&apos;t find any ads matching your current search or filters.
+                We couldn&apos;t find any Yubboxes matching your current search or filters.
               </p>
               <Link href="/ads/create">
                 <button className="text-white px-6 py-3 rounded-full font-bold transition-all hover:opacity-90 flex items-center gap-2 mx-auto" style={{ backgroundColor: 'var(--primary-btn)' }}>
                   <Plus className="w-5 h-5" />
-                  Create First Ad
+                  Create Your First Yubbox
                 </button>
               </Link>
             </div>
@@ -199,7 +240,7 @@ export default function Home() {
               <AnimatePresence mode="popLayout">
                 {filteredAds.map((ad) => (
                   <motion.div
-                    key={String(ad._id)}
+                    key={ad.id}
                     layout
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -214,7 +255,25 @@ export default function Home() {
           )}
         </section>
       </main>
-      
+
+      {/* Floating Post Ad CTA */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Link href="/ads/create">
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 text-white px-5 py-3.5 rounded-full font-bold text-sm shadow-2xl"
+            style={{
+              background: 'linear-gradient(135deg, #790e61, #c41e8a)',
+              boxShadow: '0 8px 24px rgba(121, 14, 97, 0.45)',
+            }}
+          >
+            <Plus className="w-5 h-5" />
+            <span className="hidden sm:inline">New Yubbox</span>
+          </motion.button>
+        </Link>
+      </div>
+
       <Footer />
     </div>
   );

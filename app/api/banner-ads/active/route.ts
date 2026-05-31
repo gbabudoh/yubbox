@@ -1,21 +1,27 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
-import BannerAd from '@/models/BannerAd';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    await dbConnect();
-
     const now = new Date();
 
-    const bannerAds = await BannerAd.find({
-      isActive: true,
-      startDate: { $lte: now },
-      endDate: { $gte: now },
-    })
-      .select('title description imageUrl linkUrl displayOrder')
-      .sort({ displayOrder: 1, createdAt: -1 })
-      .limit(5);
+    const bannerAds = await prisma.bannerAd.findMany({
+      where: {
+        isActive: true,
+        startDate: { lte: now },
+        endDate: { gte: now },
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        imageUrl: true,
+        linkUrl: true,
+        displayOrder: true,
+      },
+      orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
+      take: 5,
+    });
 
     return NextResponse.json({
       success: true,

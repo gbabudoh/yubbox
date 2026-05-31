@@ -1,17 +1,21 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
-import Industry from '@/models/Industry';
+import { prisma } from '@/lib/prisma';
 
 /**
  * GET - Get all active industries (public endpoint)
  */
 export async function GET() {
   try {
-    await dbConnect();
-
-    const industries = await Industry.find({ isActive: true })
-      .select('name slug description')
-      .sort({ order: 1, name: 1 });
+    const industries = await prisma.industry.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+      },
+      orderBy: [{ order: 'asc' }, { name: 'asc' }],
+    });
 
     return NextResponse.json({
       success: true,
@@ -28,4 +32,3 @@ export async function GET() {
     );
   }
 }
-

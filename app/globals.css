@@ -79,12 +79,12 @@ svg {
 
 .yc-badge {
   @apply flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all;
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  background: linear-gradient(135deg, #790e61 0%, #c41e8a 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(121, 14, 97, 0.35);
 }
 
 .yc-badge:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 16px rgba(121, 14, 97, 0.5);
 }

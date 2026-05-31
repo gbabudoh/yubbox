@@ -1,44 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin';
-import dbConnect from '@/lib/dbConnect';
-import User from '@/models/User';
-import Ad from '@/models/Ad';
-import Payment from '@/models/Payment';
+import { prisma } from '@/lib/prisma';
+import { Role } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
     await requireAdmin();
-    await dbConnect();
 
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const search = searchParams.get('search') || '';
 
-    const query: { $or?: Array<Record<string, unknown>> } = {};
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-      ];
-    }
-
     const skip = (page - 1) * limit;
 
-    const users = await User.find(query)
-      .select('-password')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    const where = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' as const } },
+            { email: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.user.count({ where }),
+    ]);
 
     // Get additional stats for each user
     const usersWithStats = await Promise.all(
       users.map(async (user) => {
-        const adsCount = await Ad.countDocuments({ userId: user._id });
-        const paymentsCount = await Payment.countDocuments({ userId: user._id, status: 'completed' });
-        const payments = await Payment.find({ userId: user._id, status: 'completed' });
-        const totalSpent = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const [adsCount, paymentsCount, completedPayments] = await Promise.all([
+          prisma.ad.count({ where: { userId: user.id } }),
+          prisma.payment.count({ where: { userId: user.id, status: 'completed' } }),
+          prisma.payment.findMany({
+            where: { userId: user.id, status: 'completed' },
+            select: { amount: true },
+          }),
+        ]);
+        const totalSpent = completedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
 
         return {
           ...user,
@@ -48,8 +62,6 @@ export async function GET(request: NextRequest) {
         };
       })
     );
-
-    const total = await User.countDocuments(query);
 
     return NextResponse.json({
       success: true,
@@ -64,6 +76,12 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized - Admin access required' },
+        { status: 403 }
+      );
+    }
     const message = error instanceof Error ? error.message : 'Failed to fetch users';
     return NextResponse.json(
       {
@@ -78,7 +96,6 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     await requireAdmin();
-    await dbConnect();
 
     const body = await request.json();
     const { userId, name, email, role } = body;
@@ -90,7 +107,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const updateData: { name?: string; email?: string; role?: string } = {};
+    const updateData: { name?: string; email?: string; role?: Role } = {};
     if (name) updateData.name = name;
     if (email) updateData.email = email;
     if (role) {
@@ -100,16 +117,36 @@ export async function PUT(request: NextRequest) {
           { status: 400 }
         );
       }
-      updateData.role = role;
+      updateData.role = role as Role;
     }
 
-    const user = await User.findByIdAndUpdate(userId, updateData, { new: true }).select('-password');
-
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
+    let user;
+    try {
+      user = await prisma.user.update({
+        where: { id: userId },
+        data: updateData,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+    } catch (updateError: unknown) {
+      if (
+        typeof updateError === 'object' &&
+        updateError !== null &&
+        'code' in updateError &&
+        (updateError as { code: string }).code === 'P2025'
+      ) {
+        return NextResponse.json(
+          { success: false, error: 'User not found' },
+          { status: 404 }
+        );
+      }
+      throw updateError;
     }
 
     return NextResponse.json({
@@ -117,6 +154,12 @@ export async function PUT(request: NextRequest) {
       data: user,
     });
   } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized - Admin access required' },
+        { status: 403 }
+      );
+    }
     const message = error instanceof Error ? error.message : 'Failed to update user';
     return NextResponse.json(
       {
@@ -131,7 +174,6 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     await requireAdmin();
-    await dbConnect();
 
     const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get('userId');
@@ -154,18 +196,22 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Delete user's ads and payments
-    await Ad.deleteMany({ userId });
-    await Payment.deleteMany({ userId });
-
-    // Delete user
-    await User.findByIdAndDelete(userId);
+    // Cascade deletes are handled by Prisma schema (onDelete: Cascade on User relations)
+    // But Payment doesn't cascade from User in schema, so delete manually first
+    await prisma.payment.deleteMany({ where: { userId } });
+    await prisma.user.delete({ where: { id: userId } });
 
     return NextResponse.json({
       success: true,
       message: 'User deleted successfully',
     });
   } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized - Admin access required' },
+        { status: 403 }
+      );
+    }
     const message = error instanceof Error ? error.message : 'Failed to delete user';
     return NextResponse.json(
       {
@@ -176,4 +222,3 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
-

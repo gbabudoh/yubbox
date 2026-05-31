@@ -1,24 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin';
-import dbConnect from '@/lib/dbConnect';
-import BannerAd from '@/models/BannerAd';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
     await requireAdmin();
-    await dbConnect();
 
     const searchParams = request.nextUrl.searchParams;
     const includeInactive = searchParams.get('includeInactive') === 'true';
 
-    const query: { isActive?: boolean } = {};
-    if (!includeInactive) {
-      query.isActive = true;
-    }
+    const where = includeInactive ? {} : { isActive: true };
 
-    const bannerAds = await BannerAd.find(query)
-      .populate('createdBy', 'name email')
-      .sort({ displayOrder: 1, createdAt: -1 });
+    const bannerAds = await prisma.bannerAd.findMany({
+      where,
+      include: {
+        createdBy: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
+    });
 
     return NextResponse.json({
       success: true,
@@ -45,7 +44,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await requireAdmin();
-    await dbConnect();
 
     const body = await request.json();
     const { title, description, imageUrl, linkUrl, cost, startDate, endDate, isActive, displayOrder, createdBy } = body;
@@ -67,17 +65,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const bannerAd = await BannerAd.create({
-      title,
-      description,
-      imageUrl,
-      linkUrl,
-      cost,
-      startDate: start,
-      endDate: end,
-      isActive: isActive !== undefined ? isActive : true,
-      displayOrder: displayOrder || 0,
-      createdBy,
+    const bannerAd = await prisma.bannerAd.create({
+      data: {
+        title,
+        description,
+        imageUrl,
+        linkUrl,
+        cost,
+        startDate: start,
+        endDate: end,
+        isActive: isActive !== undefined ? isActive : true,
+        displayOrder: displayOrder || 0,
+        createdById: createdBy,
+      },
     });
 
     return NextResponse.json(

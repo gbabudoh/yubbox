@@ -1,42 +1,24 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
-import Ad from '@/models/Ad';
+import { prisma } from '@/lib/prisma';
 
 // This endpoint can be called by a cron job to deactivate expired ads
 export async function POST() {
   try {
-    // Optional: Add authentication/authorization here for cron jobs
-    // For now, we'll allow it to be called directly
-    
-    await dbConnect();
-
     const now = new Date();
-    
-    // Find all ads that are paid, active, but past their expiry date
-    const expiredAds = await Ad.find({
-      isPaid: true,
-      isActive: true,
-      expiryDate: { $lt: now },
-    });
 
-    // Deactivate expired ads
-    if (expiredAds.length > 0) {
-      await Ad.updateMany(
-        {
-          isPaid: true,
-          isActive: true,
-          expiryDate: { $lt: now },
-        },
-        {
-          $set: { isActive: false },
-        }
-      );
-    }
+    const result = await prisma.ad.updateMany({
+      where: {
+        isPaid: true,
+        isActive: true,
+        expiryDate: { lt: now },
+      },
+      data: { isActive: false },
+    });
 
     return NextResponse.json({
       success: true,
-      message: `Deactivated ${expiredAds.length} expired ads`,
-      count: expiredAds.length,
+      message: `Deactivated ${result.count} expired ads`,
+      count: result.count,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to expire ads';
@@ -53,14 +35,15 @@ export async function POST() {
 // GET endpoint to check expired ads (for manual checking)
 export async function GET() {
   try {
-    await dbConnect();
-
     const now = new Date();
-    const expiredAds = await Ad.find({
-      isPaid: true,
-      isActive: true,
-      expiryDate: { $lt: now },
-    }).select('title expiryDate');
+    const expiredAds = await prisma.ad.findMany({
+      where: {
+        isPaid: true,
+        isActive: true,
+        expiryDate: { lt: now },
+      },
+      select: { id: true, title: true, expiryDate: true },
+    });
 
     return NextResponse.json({
       success: true,
@@ -78,4 +61,3 @@ export async function GET() {
     );
   }
 }
-

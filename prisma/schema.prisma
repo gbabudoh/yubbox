@@ -1,0 +1,237 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────
+
+enum Role {
+  user
+  admin
+}
+
+enum EventType {
+  view
+  click
+  impression
+}
+
+enum PaymentStatus {
+  pending
+  completed
+  failed
+  refunded
+}
+
+enum CategoryType {
+  product
+  service
+}
+
+enum ProductKind {
+  service
+  physical
+}
+
+// ─────────────────────────────────────────
+// Models
+// ─────────────────────────────────────────
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(user)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ads       Ad[]
+  reviews   Review[]
+  payments  Payment[]
+  analytics Analytics[]
+  bannerAds BannerAd[]
+}
+
+model Category {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String       @unique @db.VarChar(100)
+  slug        String       @unique
+  type        CategoryType
+  description String?      @db.VarChar(500)
+  isActive    Boolean      @default(true)
+  order       Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  ads Ad[]
+
+  @@index([slug])
+  @@index([type])
+  @@index([isActive])
+  @@index([order])
+}
+
+model Industry {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique @db.VarChar(100)
+  slug        String   @unique
+  description String?  @db.VarChar(500)
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ads Ad[]
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([order])
+}
+
+model ProductType {
+  id          String      @id @default(uuid()) @db.Uuid
+  name        String      @unique @db.VarChar(100)
+  slug        String      @unique
+  type        ProductKind
+  description String?     @db.VarChar(500)
+  isActive    Boolean     @default(true)
+  order       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([slug])
+  @@index([type])
+  @@index([isActive])
+  @@index([order])
+}
+
+model Ad {
+  id            String    @id @default(uuid()) @db.Uuid
+  title         String    @db.VarChar(100)
+  description   String    @db.VarChar(500)
+  imageUrl      String
+  webLink       String
+  ownerName     String
+  location      String
+  companyName   String
+  countries     String[]
+  categoryId    String    @db.Uuid
+  industryId    String    @db.Uuid
+  userId        String    @db.Uuid
+  isActive      Boolean   @default(true)
+  isPaid        Boolean   @default(false)
+  paymentDate   DateTime?
+  expiryDate    DateTime
+  topLensExpiry DateTime?
+  storiesExpiry DateTime?
+  yubboxCount   Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user     User     @relation(fields: [userId],     references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
+  industry Industry @relation(fields: [industryId], references: [id])
+
+  reviews   Review[]
+  payments  Payment[]
+  analytics Analytics[]
+
+  @@index([userId])
+  @@index([isActive])
+  @@index([isPaid])
+  @@index([expiryDate])
+  @@index([categoryId])
+  @@index([industryId])
+  @@index([topLensExpiry])
+  @@index([storiesExpiry])
+  @@index([yubboxCount(sort: Desc)])
+}
+
+model Review {
+  id        String   @id @default(uuid()) @db.Uuid
+  rating    Int
+  comment   String?  @db.VarChar(500)
+  adId      String   @db.Uuid
+  userId    String?  @db.Uuid
+  userName  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ad   Ad    @relation(fields: [adId],    references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId],  references: [id], onDelete: SetNull)
+
+  @@index([adId])
+  @@index([userId])
+}
+
+model Analytics {
+  id        String    @id @default(uuid()) @db.Uuid
+  adId      String    @db.Uuid
+  eventType EventType
+  country   String?
+  ipAddress String?
+  userAgent String?
+  referrer  String?
+  timestamp DateTime  @default(now())
+  userId    String?   @db.Uuid
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  ad   Ad    @relation(fields: [adId],   references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([adId, eventType])
+  @@index([adId, timestamp(sort: Desc)])
+  @@index([adId, country])
+}
+
+model Payment {
+  id            String        @id @default(uuid()) @db.Uuid
+  adId          String        @db.Uuid
+  userId        String        @db.Uuid
+  amount        Decimal       @default(1.00) @db.Decimal(10, 2)
+  currency      String        @default("USD")
+  status        PaymentStatus @default(pending)
+  paymentMethod String        @default("manual")
+  transactionId String?
+  paymentDate   DateTime      @default(now())
+  expiryDate    DateTime
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  ad   Ad   @relation(fields: [adId],   references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([adId])
+  @@index([userId])
+  @@index([status])
+  @@index([expiryDate])
+}
+
+model BannerAd {
+  id           String   @id @default(uuid()) @db.Uuid
+  title        String   @db.VarChar(100)
+  description  String?  @db.VarChar(500)
+  imageUrl     String
+  linkUrl      String
+  cost         Decimal  @db.Decimal(10, 2)
+  startDate    DateTime
+  endDate      DateTime
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdById  String   @db.Uuid
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([isActive])
+  @@index([startDate, endDate])
+  @@index([displayOrder])
+}

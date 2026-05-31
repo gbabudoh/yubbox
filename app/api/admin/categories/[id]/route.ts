@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin';
-import dbConnect from '@/lib/dbConnect';
-import Category from '@/models/Category';
+import { prisma } from '@/lib/prisma';
+import { CategoryType } from '@prisma/client';
 
 /**
  * GET - Get a single category
@@ -12,10 +12,9 @@ export async function GET(
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
 
     const { id } = await params;
-    const category = await Category.findById(id);
+    const category = await prisma.category.findUnique({ where: { id } });
 
     if (!category) {
       return NextResponse.json(
@@ -55,35 +54,39 @@ export async function PUT(
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
 
     const { id } = await params;
     const body = await request.json();
     const { name, description, order, isActive, type } = body;
 
-    const category = await Category.findById(id);
+    const existing = await prisma.category.findUnique({ where: { id } });
 
-    if (!category) {
+    if (!existing) {
       return NextResponse.json(
         { success: false, error: 'Category not found' },
         { status: 404 }
       );
     }
 
+    const updateData: Record<string, unknown> = {};
+
     if (name) {
-      category.name = name;
+      updateData.name = name;
       // Auto-generate slug from name when name changes
-      category.slug = name
+      updateData.slug = name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
     }
-    if (type && ['product', 'service'].includes(type)) category.type = type;
-    if (description !== undefined) category.description = description;
-    if (order !== undefined) category.order = order;
-    if (isActive !== undefined) category.isActive = isActive;
+    if (type && ['product', 'service'].includes(type)) updateData.type = type as CategoryType;
+    if (description !== undefined) updateData.description = description;
+    if (order !== undefined) updateData.order = order;
+    if (isActive !== undefined) updateData.isActive = isActive;
 
-    await category.save();
+    const category = await prisma.category.update({
+      where: { id },
+      data: updateData,
+    });
 
     return NextResponse.json({
       success: true,
@@ -96,7 +99,12 @@ export async function PUT(
         { status: 403 }
       );
     }
-    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code: string }).code === 'P2002'
+    ) {
       return NextResponse.json(
         { success: false, error: 'Category with this name already exists' },
         { status: 400 }
@@ -122,16 +130,24 @@ export async function DELETE(
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
 
     const { id } = await params;
-    const category = await Category.findByIdAndDelete(id);
 
-    if (!category) {
-      return NextResponse.json(
-        { success: false, error: 'Category not found' },
-        { status: 404 }
-      );
+    try {
+      await prisma.category.delete({ where: { id } });
+    } catch (deleteError: unknown) {
+      if (
+        typeof deleteError === 'object' &&
+        deleteError !== null &&
+        'code' in deleteError &&
+        (deleteError as { code: string }).code === 'P2025'
+      ) {
+        return NextResponse.json(
+          { success: false, error: 'Category not found' },
+          { status: 404 }
+        );
+      }
+      throw deleteError;
     }
 
     return NextResponse.json({
@@ -155,4 +171,3 @@ export async function DELETE(
     );
   }
 }
-

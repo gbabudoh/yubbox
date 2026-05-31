@@ -1,62 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth';
-import dbConnect from '@/lib/dbConnect';
-import Ad from '@/models/Ad';
-import mongoose from 'mongoose';
+import { prisma } from '@/lib/prisma';
+
+const AD_INCLUDE = {
+  user: { select: { id: true, name: true, email: true } },
+  category: { select: { id: true, name: true, slug: true, type: true } },
+  industry: { select: { id: true, name: true, slug: true } },
+};
 
 export async function GET(request: NextRequest) {
   try {
-    await dbConnect();
-
     const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get('userId');
     const isActive = searchParams.get('isActive');
-    const country = searchParams.get('country'); // Filter by country code
+    const country = searchParams.get('country');
 
-    const query: Record<string, unknown> = {};
+    const where: Record<string, unknown> = {};
 
     if (userId) {
-      // Convert userId string to ObjectId for query
-      if (mongoose.Types.ObjectId.isValid(userId)) {
-        query.userId = new mongoose.Types.ObjectId(userId);
-      } else {
-        query.userId = userId;
-      }
+      where.userId = userId;
     }
 
     if (isActive !== null) {
-      query.isActive = isActive === 'true';
+      where.isActive = isActive === 'true';
     }
 
     // Filter by country - ads that include this country in their countries array
     if (country) {
-      query.countries = { $in: [country] };
+      where.countries = { has: country };
     }
 
     // Only show non-expired ads for public feed
-    // TODO: Re-enable isPaid filter after testing
     if (!userId) {
-      // query.isPaid = true; // TEMPORARILY BYPASSED FOR TESTING
-      query.expiryDate = { $gte: new Date() };
+      where.expiryDate = { gte: new Date() };
     }
 
-    // Fetch ads and populate safely - try full populate, fallback to basic if it fails
-    let ads;
-    try {
-      ads = await Ad.find(query)
-        .populate('userId', 'name email')
-        .populate('categoryId', 'name slug type')
-        .populate('industryId', 'name slug')
-        .populate('productTypeId', 'name slug type')
-        .sort({ createdAt: -1 });
-    } catch (populateError) {
-      // If populate fails (e.g., collections don't exist), use the basic query
-      console.warn('Populate failed, using basic query:', populateError);
-      ads = await Ad.find(query)
-        .populate('userId', 'name email')
-        .sort({ createdAt: -1 });
-    }
+    const ads = await prisma.ad.findMany({
+      where,
+      include: AD_INCLUDE,
+      orderBy: { createdAt: 'desc' },
+    });
 
     return NextResponse.json({
       success: true,
@@ -85,8 +69,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await dbConnect();
-
     const formData = await request.formData();
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
@@ -96,14 +78,14 @@ export async function POST(request: NextRequest) {
     const location = formData.get('location') as string;
     const companyName = formData.get('companyName') as string;
     // Support both countries and targetLocations for backward compatibility
-    const countries = formData.getAll('countries').length > 0 
+    const countries = formData.getAll('countries').length > 0
       ? formData.getAll('countries') as string[]
       : formData.getAll('targetLocations') as string[];
     const categoryId = formData.get('categoryId') as string | null;
     const industryId = formData.get('industryId') as string | null;
     const isTopLens = formData.get('isTopLens') === 'true';
     const isStories = formData.get('isStories') === 'true';
-    
+
     // Validation
     if (!title || !description || !imageUrl || !webLink || !ownerName || !location || !companyName) {
       return NextResponse.json(
@@ -133,52 +115,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    
     // Set initial expiry dates
     const now = new Date();
     const expiryDate = new Date(now);
     expiryDate.setDate(expiryDate.getDate() + 30);
 
-    const adData: Record<string, unknown> = {
-      title,
-      description,
-      imageUrl,
-      webLink,
-      ownerName,
-      location,
-      companyName,
-      countries,
-      userId: session.user.id,
-      isActive: true, // Active immediately (bypassing payment)
-      isPaid: false,
-      expiryDate,
-      topLensExpiry: isTopLens ? expiryDate : null,
-      storiesExpiry: isStories ? expiryDate : null,
-    };
-
-    // Add required fields
-    adData.categoryId = categoryId;
-    adData.industryId = industryId;
-
-    const ad = await Ad.create(adData);
-
-    // Populate safely
-    let populatedAd;
-    try {
-      populatedAd = await Ad.findById(ad._id)
-        .populate('userId', 'name email')
-        .populate('categoryId', 'name slug')
-        .populate('industryId', 'name slug');
-    } catch {
-      // If populate fails, use basic populate
-      populatedAd = await Ad.findById(ad._id)
-        .populate('userId', 'name email');
-    }
+    const ad = await prisma.ad.create({
+      data: {
+        title,
+        description,
+        imageUrl,
+        webLink,
+        ownerName,
+        location,
+        companyName,
+        countries,
+        userId: session.user.id,
+        categoryId,
+        industryId,
+        isActive: true,
+        isPaid: false,
+        expiryDate,
+        topLensExpiry: isTopLens ? expiryDate : null,
+        storiesExpiry: isStories ? expiryDate : null,
+      },
+      include: AD_INCLUDE,
+    });
 
     return NextResponse.json(
       {
         success: true,
-        data: populatedAd,
+        data: ad,
       },
       { status: 201 }
     );
@@ -193,4 +160,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

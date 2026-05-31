@@ -13,6 +13,8 @@
     "create-sample-banners": "node scripts/createSampleBanners.js"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
     "@stripe/stripe-js": "^8.4.0",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.3",
@@ -22,11 +24,12 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.562.0",
     "minio": "^8.0.6",
-    "mongoose": "^8.19.4",
     "next": "16.0.3",
     "next-auth": "^4.24.13",
     "next-i18next": "^15.4.3",
     "next-intl": "^4.8.2",
+    "pg": "^8.21.0",
+    "prisma": "^7.8.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "recharts": "^3.4.1",
@@ -36,6 +39,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin';
-import dbConnect from '@/lib/dbConnect';
-import User from '@/models/User';
-import Ad from '@/models/Ad';
-import Payment from '@/models/Payment';
-import Analytics from '@/models/Analytics';
+import { prisma } from '@/lib/prisma';
+import { EventType } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
     await requireAdmin();
-    await dbConnect();
 
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
@@ -29,21 +25,24 @@ export async function GET(request: NextRequest) {
       country?: string;
     }> = [];
 
+    const fetchLimit = type === 'all' ? limit : 50;
+    const fetchSkip = type === 'all' ? skip : 0;
+
     // User registrations
     if (type === 'all' || type === 'user_created') {
-      const users = await User.find({})
-        .select('name email createdAt')
-        .sort({ createdAt: -1 })
-        .skip(type === 'all' ? skip : 0)
-        .limit(type === 'all' ? limit : 50)
-        .lean();
+      const users = await prisma.user.findMany({
+        select: { id: true, name: true, email: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        skip: fetchSkip,
+        take: fetchLimit,
+      });
 
       users.forEach((user) => {
         activities.push({
           type: 'user_created',
           description: `New user registered: ${user.name} (${user.email})`,
           user: user.name,
-          userId: user._id.toString(),
+          userId: user.id,
           timestamp: user.createdAt,
         });
       });
@@ -51,22 +50,25 @@ export async function GET(request: NextRequest) {
 
     // Ad creations
     if (type === 'all' || type === 'ad_created') {
-      const ads = await Ad.find({})
-        .populate('userId', 'name email')
-        .select('title userId createdAt')
-        .sort({ createdAt: -1 })
-        .skip(type === 'all' ? skip : 0)
-        .limit(type === 'all' ? limit : 50)
-        .lean();
+      const ads = await prisma.ad.findMany({
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+          user: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: fetchSkip,
+        take: fetchLimit,
+      });
 
       ads.forEach((ad) => {
-        const user = ad.userId as unknown as { name?: string; _id: string };
         activities.push({
           type: 'ad_created',
           description: `Ad created: "${ad.title}"`,
-          user: user?.name || 'Unknown',
-          userId: user?._id?.toString(),
-          adId: ad._id.toString(),
+          user: ad.user?.name || 'Unknown',
+          userId: ad.user?.id,
+          adId: ad.id,
           timestamp: ad.createdAt,
         });
       });
@@ -74,24 +76,27 @@ export async function GET(request: NextRequest) {
 
     // Payments
     if (type === 'all' || type === 'payment') {
-      const payments = await Payment.find({})
-        .populate('userId', 'name email')
-        .populate('adId', 'title')
-        .select('amount status userId adId createdAt')
-        .sort({ createdAt: -1 })
-        .skip(type === 'all' ? skip : 0)
-        .limit(type === 'all' ? limit : 50)
-        .lean();
+      const payments = await prisma.payment.findMany({
+        select: {
+          id: true,
+          amount: true,
+          status: true,
+          createdAt: true,
+          user: { select: { id: true, name: true } },
+          ad: { select: { id: true, title: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: fetchSkip,
+        take: fetchLimit,
+      });
 
       payments.forEach((payment) => {
-        const user = payment.userId as unknown as { name?: string; _id: string };
-        const ad = payment.adId as unknown as { title?: string };
         activities.push({
           type: 'payment',
-          description: `Payment ${payment.status}: $${payment.amount?.toFixed(2)} for "${ad?.title || 'Unknown Ad'}"`,
-          user: user?.name || 'Unknown',
-          userId: user?._id?.toString(),
-          amount: payment.amount,
+          description: `Payment ${payment.status}: $${Number(payment.amount).toFixed(2)} for "${payment.ad?.title || 'Unknown Ad'}"`,
+          user: payment.user?.name || 'Unknown',
+          userId: payment.user?.id,
+          amount: Number(payment.amount),
           status: payment.status,
           timestamp: payment.createdAt,
         });
@@ -100,21 +105,25 @@ export async function GET(request: NextRequest) {
 
     // Ad views
     if (type === 'all' || type === 'ad_view') {
-      const views = await Analytics.find({ type: 'view' })
-        .populate('adId', 'title')
-        .select('adId country userAgent createdAt')
-        .sort({ createdAt: -1 })
-        .skip(type === 'all' ? skip : 0)
-        .limit(type === 'all' ? limit : 50)
-        .lean();
+      const views = await prisma.analytics.findMany({
+        where: { eventType: EventType.view },
+        select: {
+          id: true,
+          country: true,
+          createdAt: true,
+          ad: { select: { id: true, title: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: fetchSkip,
+        take: fetchLimit,
+      });
 
       views.forEach((view) => {
-        const ad = view.adId as unknown as { title?: string; _id: string };
         activities.push({
           type: 'ad_view',
-          description: `Ad viewed: "${ad?.title || 'Unknown'}" from ${view.country || 'Unknown'}`,
-          adId: ad?._id?.toString(),
-          country: view.country,
+          description: `Ad viewed: "${view.ad?.title || 'Unknown'}" from ${view.country || 'Unknown'}`,
+          adId: view.ad?.id,
+          country: view.country ?? undefined,
           timestamp: view.createdAt,
         });
       });
@@ -122,27 +131,31 @@ export async function GET(request: NextRequest) {
 
     // Ad clicks
     if (type === 'all' || type === 'ad_click') {
-      const clicks = await Analytics.find({ type: 'click' })
-        .populate('adId', 'title')
-        .select('adId country userAgent createdAt')
-        .sort({ createdAt: -1 })
-        .skip(type === 'all' ? skip : 0)
-        .limit(type === 'all' ? limit : 50)
-        .lean();
+      const clicks = await prisma.analytics.findMany({
+        where: { eventType: EventType.click },
+        select: {
+          id: true,
+          country: true,
+          createdAt: true,
+          ad: { select: { id: true, title: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: fetchSkip,
+        take: fetchLimit,
+      });
 
       clicks.forEach((click) => {
-        const ad = click.adId as unknown as { title?: string; _id: string };
         activities.push({
           type: 'ad_click',
-          description: `Ad clicked: "${ad?.title || 'Unknown'}" from ${click.country || 'Unknown'}`,
-          adId: ad?._id?.toString(),
-          country: click.country,
+          description: `Ad clicked: "${click.ad?.title || 'Unknown'}" from ${click.country || 'Unknown'}`,
+          adId: click.ad?.id,
+          country: click.country ?? undefined,
           timestamp: click.createdAt,
         });
       });
     }
 
-    // Sort all activities by timestamp and limit
+    // Sort all activities by timestamp and paginate
     activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     const paginatedActivities = activities.slice(skip, skip + limit);
 
@@ -159,6 +172,12 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Admin access required') {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized - Admin access required' },
+        { status: 403 }
+      );
+    }
     const message = error instanceof Error ? error.message : 'Failed to fetch activities';
     return NextResponse.json(
       {
@@ -169,4 +188,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

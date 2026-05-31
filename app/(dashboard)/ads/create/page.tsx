@@ -1,11 +1,11 @@
 'use client';
 
-import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 import AdForm from '@/components/AdForm';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { useI18n } from '@/lib/i18n-context';
 import { adService } from '@/services/adService';
 
@@ -15,47 +15,34 @@ export default function CreateAdPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    }
+    if (status === 'unauthenticated') router.push('/login');
   }, [status, router]);
 
   if (status === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">{t('common.loading')}</p>
-        </div>
+        <div className="w-12 h-12 rounded-full border-4 border-[#790e61]/20 border-t-[#790e61] animate-spin" />
       </div>
     );
   }
 
-  if (status === 'unauthenticated') {
-    return null;
-  }
+  if (status === 'unauthenticated') return null;
 
   const handleSubmit = async (formData: FormData) => {
     await adService.createAd(formData);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{t('ad.createNewAd') || 'Create New Yubbox'}</h1>
-            <p className="mt-2 text-gray-600">
-              {t('ad.shareProduct')}
-            </p>
-          </div>
-          <LanguageSwitcher />
+    <div className="min-h-screen bg-gray-50/50">
+      <Header />
+      <main className="pt-36 pb-20 max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="mb-8">
+          <h1 className="text-3xl font-black text-neutral-900 mb-1">{t('ad.createNewAd')}</h1>
+          <p className="text-sm text-neutral-400 font-medium">{t('ad.shareProduct')}</p>
         </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <AdForm onSubmit={handleSubmit} />
-        </div>
-      </div>
+        <AdForm onSubmit={handleSubmit} />
+      </main>
+      <Footer />
     </div>
   );
 }
-

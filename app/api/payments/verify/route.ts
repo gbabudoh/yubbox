@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth';
-import dbConnect from '@/lib/dbConnect';
-import Payment from '@/models/Payment';
-import Ad from '@/models/Ad';
+import { prisma } from '@/lib/prisma';
 import { stripe } from '@/lib/stripe';
 
 /**
@@ -20,8 +18,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await dbConnect();
-
     const body = await request.json();
     const { sessionId, paymentId, adId } = body;
 
@@ -33,15 +29,20 @@ export async function POST(request: NextRequest) {
     }
 
     let payment;
-    let ad;
 
     // Find payment by different methods
     if (paymentId) {
-      payment = await Payment.findById(paymentId);
+      payment = await prisma.payment.findUnique({ where: { id: paymentId } });
     } else if (adId) {
-      payment = await Payment.findOne({ adId }).sort({ createdAt: -1 });
+      payment = await prisma.payment.findFirst({
+        where: { adId },
+        orderBy: { createdAt: 'desc' },
+      });
     } else if (sessionId) {
-      payment = await Payment.findOne({ transactionId: sessionId }).sort({ createdAt: -1 });
+      payment = await prisma.payment.findFirst({
+        where: { transactionId: sessionId },
+        orderBy: { createdAt: 'desc' },
+      });
     }
 
     if (!payment) {
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user owns the payment
-    if (payment.userId.toString() !== session.user.id) {
+    if (payment.userId !== session.user.id) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 403 }
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     // If payment is already completed, return success
     if (payment.status === 'completed') {
-      ad = await Ad.findById(payment.adId);
+      const ad = await prisma.ad.findUnique({ where: { id: payment.adId } });
       return NextResponse.json({
         success: true,
         data: {
@@ -84,26 +85,31 @@ export async function POST(request: NextRequest) {
           expiryDate.setDate(expiryDate.getDate() + 14);
           expiryDate.setHours(23, 59, 59, 999);
 
-          payment.status = 'completed';
-          payment.paymentDate = paymentDate;
-          payment.expiryDate = expiryDate;
-          await payment.save();
+          const updatedPayment = await prisma.payment.update({
+            where: { id: payment.id },
+            data: {
+              status: 'completed',
+              paymentDate,
+              expiryDate,
+            },
+          });
 
           // Update ad
-          ad = await Ad.findById(payment.adId);
-          if (ad) {
-            ad.isPaid = true;
-            ad.paymentDate = paymentDate;
-            ad.expiryDate = expiryDate;
-            ad.isActive = true;
-            await ad.save();
-          }
+          const updatedAd = await prisma.ad.update({
+            where: { id: payment.adId },
+            data: {
+              isPaid: true,
+              paymentDate,
+              expiryDate,
+              isActive: true,
+            },
+          });
 
           return NextResponse.json({
             success: true,
             data: {
-              payment,
-              ad,
+              payment: updatedPayment,
+              ad: updatedAd,
               isPaid: true,
               verified: true,
             },
@@ -133,7 +139,7 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         payment,
-        isPaid: false, // At this point, it's definitely not completed
+        isPaid: false,
       },
     });
   } catch (error: unknown) {
@@ -148,4 +154,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

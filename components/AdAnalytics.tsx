@@ -10,18 +10,17 @@ interface AdAnalyticsProps {
   ad: IAd;
 }
 
-interface StatItem {
-  _id: string | number;
-  count: number;
-}
+interface CountryStat { country: string; count: number; }
+interface HourlyStat  { hour: number;   count: number; }
+interface DailyStat   { date: string;   count: number; }
 
 interface Statistics {
   totalViews: number;
   totalClicks: number;
   clickThroughRate: number;
-  countryStats: StatItem[];
-  hourlyStats: StatItem[];
-  dailyStats: StatItem[];
+  countryStats: CountryStat[];
+  hourlyStats:  HourlyStat[];
+  dailyStats:   DailyStat[];
 }
 
 interface AnalyticsData {
@@ -37,7 +36,7 @@ const AdAnalytics: React.FC<AdAnalyticsProps> = ({ ad }) => {
     const fetchAnalytics = async () => {
       try {
         setIsLoading(true);
-        const data = await analyticsService.getAnalytics(String(ad._id));
+        const data = await analyticsService.getAnalytics(ad.id);
         setAnalytics(data);
       } catch (error) {
         console.error('Failed to fetch analytics:', error);
@@ -47,7 +46,7 @@ const AdAnalytics: React.FC<AdAnalyticsProps> = ({ ad }) => {
     };
 
     fetchAnalytics();
-  }, [ad._id]);
+  }, [ad.id]);
 
   if (isLoading) {
     return (
@@ -104,7 +103,7 @@ const AdAnalytics: React.FC<AdAnalyticsProps> = ({ ad }) => {
           </h3>
           <div className="space-y-2">
             {statistics.countryStats.map((stat, index) => {
-              const country = getCountryByCode(String(stat._id));
+              const country = getCountryByCode(String(stat.country));
               return (
                 <div
                   key={index}
@@ -113,7 +112,7 @@ const AdAnalytics: React.FC<AdAnalyticsProps> = ({ ad }) => {
                   <div className="flex items-center gap-2">
                     {country && <span className="text-lg">{country.flag}</span>}
                     <span className="font-medium">
-                      {country ? country.name : stat._id || 'Unknown'}
+                      {country ? country.name : stat.country || 'Unknown'}
                     </span>
                   </div>
                   <span className="text-gray-600 font-semibold">
@@ -135,7 +134,7 @@ const AdAnalytics: React.FC<AdAnalyticsProps> = ({ ad }) => {
           <div className="grid grid-cols-12 gap-2">
             {Array.from({ length: 24 }).map((_, hour) => {
               const hourStat = statistics.hourlyStats.find(
-                (h) => h._id === hour
+                (h) => h.hour === hour
               );
               const count = hourStat?.count || 0;
               const maxCount = Math.max(
@@ -180,7 +179,7 @@ const AdAnalytics: React.FC<AdAnalyticsProps> = ({ ad }) => {
               return (
                 <div key={index} className="flex items-center gap-4">
                   <span className="text-sm font-medium text-gray-700 w-24">
-                    {stat._id}
+                    {stat.date}
                   </span>
                   <div className="flex-1 bg-gray-200 rounded-full h-6 relative">
                     {stat.count > 0 && (

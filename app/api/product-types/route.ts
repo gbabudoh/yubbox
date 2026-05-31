@@ -1,25 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
-import ProductType from '@/models/ProductType';
+import { prisma } from '@/lib/prisma';
+import { ProductKind } from '@prisma/client';
 
 /**
  * GET - Get all active product types (public endpoint)
  */
 export async function GET(request: NextRequest) {
   try {
-    await dbConnect();
-
     const searchParams = request.nextUrl.searchParams;
     const type = searchParams.get('type'); // Optional filter: 'service' or 'physical'
 
-    const query: { isActive: boolean; type?: string } = { isActive: true };
+    const where: { isActive: boolean; type?: ProductKind } = { isActive: true };
     if (type && ['service', 'physical'].includes(type)) {
-      query.type = type;
+      where.type = type as ProductKind;
     }
 
-    const productTypes = await ProductType.find(query)
-      .select('name slug type description')
-      .sort({ order: 1, name: 1 });
+    const productTypes = await prisma.productType.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        type: true,
+        description: true,
+      },
+      orderBy: [{ order: 'asc' }, { name: 'asc' }],
+    });
 
     return NextResponse.json({
       success: true,
@@ -36,4 +42,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

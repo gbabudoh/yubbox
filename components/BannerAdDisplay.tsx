@@ -8,7 +8,7 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 
 interface BannerAd {
-  _id: string;
+  id: string;
   title: string;
   description?: string;
   imageUrl: string;
@@ -43,10 +43,10 @@ export default function BannerAdDisplay() {
   }
 
   return (
-    <div className="w-full bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+    <div className="w-full bg-gradient-to-br from-[#790e61]/5 via-[#a0186c]/5 to-[#c41e8a]/5">
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="mb-4 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h2 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(to right, #790e61, #c41e8a)' }}>
             Premium Featured Partners
           </h2>
           <p className="text-gray-600 text-sm mt-1">Discover amazing products and services</p>
@@ -69,7 +69,7 @@ export default function BannerAdDisplay() {
           className="banner-swiper rounded-2xl overflow-hidden shadow-2xl"
         >
           {bannerAds.map((banner, index) => (
-            <SwiperSlide key={banner._id}>
+            <SwiperSlide key={banner.id}>
               <a
                 href={banner.linkUrl}
                 target="_blank"
@@ -77,7 +77,7 @@ export default function BannerAdDisplay() {
                 className="block group"
               >
                 <div className="relative h-64 sm:h-80 md:h-96 lg:h-[28rem] overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 z-10"></div>
+                  <div className="absolute inset-0 z-10" style={{ background: 'linear-gradient(135deg, rgba(121,14,97,0.15), rgba(196,30,138,0.15))' }}></div>
                   
                   <img
                     src={banner.imageUrl}
@@ -88,7 +88,7 @@ export default function BannerAdDisplay() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-20">
                     <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8 md:p-12">
                       <div className="max-w-4xl">
-                        <div className="inline-block px-4 py-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full text-white text-xs font-semibold mb-4 shadow-lg">
+                        <div className="inline-block px-4 py-1 rounded-full text-white text-xs font-semibold mb-4 shadow-lg" style={{ background: 'linear-gradient(to right, #790e61, #c41e8a)' }}>
                           PREMIUM PARTNER
                         </div>
                         
@@ -171,10 +171,10 @@ export default function BannerAdDisplay() {
           transform: scale(1.2);
         }
         .banner-swiper .swiper-pagination-bullet-active {
-          background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+          background: linear-gradient(135deg, #790e61, #c41e8a);
           width: 28px;
           border-radius: 10px;
-          box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+          box-shadow: 0 0 12px rgba(121, 14, 97, 0.6);
         }
         
         /* Navigation arrows - Simple design */

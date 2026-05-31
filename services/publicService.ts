@@ -5,7 +5,7 @@ import { ApiResponse } from '@/types/general';
  * Used in ad forms and public pages
  */
 export interface PublicCategory {
-  _id: string;
+  id: string;
   name: string;
   slug: string;
   type: 'product' | 'service';
@@ -13,14 +13,14 @@ export interface PublicCategory {
 }
 
 export interface PublicIndustry {
-  _id: string;
+  id: string;
   name: string;
   slug: string;
   description?: string;
 }
 
 export interface PublicProductType {
-  _id: string;
+  id: string;
   name: string;
   slug: string;
   type: 'service' | 'physical';

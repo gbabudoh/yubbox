@@ -7,7 +7,7 @@ import Input from '@/components/ui/Input';
 import { useI18n } from '@/lib/i18n-context';
 
 export interface ManageableItem {
-  _id: string;
+  id: string;
   name: string;
   slug?: string;
   description?: string;
@@ -91,7 +91,7 @@ export default function ManageItems({
 
     try {
       if (editingItem) {
-        await onUpdate(editingItem._id, formData);
+        await onUpdate(editingItem.id, formData);
       } else {
         await onCreate(formData);
       }
@@ -119,7 +119,7 @@ export default function ManageItems({
 
   const handleToggleActive = async (item: ManageableItem) => {
     try {
-      await onUpdate(item._id, { isActive: !item.isActive });
+      await onUpdate(item.id, { isActive: !item.isActive });
       await onLoad();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to update');
@@ -181,7 +181,7 @@ export default function ManageItems({
                 </tr>
               ) : (
                 items.map((item) => (
-                  <tr key={item._id} className="hover:bg-gray-50">
+                  <tr key={item.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{item.name}</div>
                       {item.description && (
@@ -222,7 +222,7 @@ export default function ManageItems({
                         {t('admin.edit') || 'Edit'}
                       </button>
                       <button
-                        onClick={() => handleDelete(item._id)}
+                        onClick={() => handleDelete(item.id)}
                         className="text-red-600 hover:text-red-900"
                       >
                         {t('admin.delete') || 'Delete'}
