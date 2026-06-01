@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth';
 import { prisma } from '@/lib/prisma';
+import { AD_DURATION_DAYS } from '@/lib/stripe-shared';
+import { sendPushNotification } from '@/lib/webpush';
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://yubbox.com';
 
 const AD_INCLUDE = {
   user: { select: { id: true, name: true, email: true } },
@@ -39,7 +43,10 @@ export async function GET(request: NextRequest) {
     const ads = await prisma.ad.findMany({
       where,
       include: AD_INCLUDE,
-      orderBy: { createdAt: 'desc' },
+      // Public feed: rank by visibility score (algorithmic), then recency as tiebreaker
+      orderBy: userId
+        ? { createdAt: 'desc' }
+        : [{ visibilityScore: 'desc' }, { createdAt: 'desc' }],
     });
 
     return NextResponse.json({
@@ -118,7 +125,7 @@ export async function POST(request: NextRequest) {
     // Set initial expiry dates
     const now = new Date();
     const expiryDate = new Date(now);
-    expiryDate.setDate(expiryDate.getDate() + 30);
+    expiryDate.setDate(expiryDate.getDate() + AD_DURATION_DAYS);
 
     const ad = await prisma.ad.create({
       data: {
@@ -142,6 +149,9 @@ export async function POST(request: NextRequest) {
       include: AD_INCLUDE,
     });
 
+    // Fire-and-forget: notify users with matching saved searches
+    dispatchPushNotifications(ad.id, ad.title, ad.categoryId, ad.countries).catch(() => null);
+
     return NextResponse.json(
       {
         success: true,
@@ -159,4 +169,39 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+async function dispatchPushNotifications(
+  adId: string,
+  adTitle: string,
+  categoryId: string,
+  countries: string[],
+) {
+  const matches = await prisma.savedSearch.findMany({
+    where: {
+      OR: [
+        { categoryId },
+        { country: { in: countries } },
+        { categoryId: null, country: null },
+      ],
+    },
+    include: { user: { include: { pushSubscriptions: true } } },
+  });
+
+  const seen  = new Set<string>();
+  const sends: Promise<unknown>[] = [];
+  for (const s of matches) {
+    for (const sub of s.user.pushSubscriptions) {
+      if (seen.has(sub.id)) continue;
+      seen.add(sub.id);
+      sends.push(
+        sendPushNotification(sub, {
+          title: 'New Yubbox matches your search',
+          body:  adTitle,
+          url:   `${BASE_URL}/ads/${adId}`,
+        }).catch(() => null)
+      );
+    }
+  }
+  await Promise.allSettled(sends);
 }

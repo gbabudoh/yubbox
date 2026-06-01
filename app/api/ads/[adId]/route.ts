@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth';
 import { prisma } from '@/lib/prisma';
+import { recomputeAdVisibilityScore } from '@/lib/algorithms/visibility';
 
 const AD_INCLUDE = {
   user: { select: { id: true, name: true, email: true } },
@@ -116,6 +117,9 @@ export async function PUT(
       data: updateData,
       include: AD_INCLUDE,
     });
+
+    // Recompute visibility — premium status or targeting may have changed
+    recomputeAdVisibilityScore(adId).catch(() => null);
 
     return NextResponse.json({
       success: true,

@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { Search, Plus, User, LayoutDashboard, Menu, X, ArrowRight, Rocket, Globe, BarChart3, Zap } from 'lucide-react';
 import Logo from '@/components/Logo';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import HeaderCountryPicker from '@/components/HeaderCountryPicker';
 import { useI18n } from '@/lib/i18n-context';
 import Button from '@/components/ui/Button';
 
@@ -35,22 +36,21 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchQuery, setSearchQuery }
         <div className="hidden md:flex items-center justify-center gap-6">
           <span className="flex items-center gap-1.5 opacity-90">
             <Globe className="w-3 h-3" />
-            Yubbox your products to 150+ countries
+            {t('header.banner1')}
           </span>
           <span className="opacity-40">·</span>
           <span className="flex items-center gap-1.5 opacity-90">
             <BarChart3 className="w-3 h-3" />
-            Real-Time Analytics
+            {t('header.banner2')}
           </span>
           <span className="opacity-40">·</span>
           <span className="flex items-center gap-1.5 opacity-90">
             <Zap className="w-3 h-3" />
-            Every ad is a Yubbox — from $1
+            {t('header.banner3')}
           </span>
         </div>
-        {/* Mobile: single concise line */}
         <div className="md:hidden text-center opacity-90">
-          Yubbox your business globally · From $1
+          {t('header.bannerMobile')}
         </div>
       </div>
       
@@ -88,6 +88,9 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchQuery, setSearchQuery }
         {/* Navigation - Desktop */}
         <nav className="hidden md:flex items-center gap-4">
           <div className="flex items-center gap-1">
+            <Suspense fallback={null}>
+              <HeaderCountryPicker />
+            </Suspense>
             <LanguageSwitcher />
           </div>
           
@@ -102,7 +105,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchQuery, setSearchQuery }
               <Link href="/ads/create">
                 <Button className="rounded-full px-4 py-1.5 text-white text-xs flex items-center gap-2 border-none shadow-lg hover:opacity-90" style={{ backgroundColor: 'var(--primary-btn)', boxShadow: '0 4px 14px 0 rgba(121, 14, 97, 0.39)' }}>
                   <Plus className="w-3.5 h-3.5" />
-                  New Yubbox
+                  {t('header.newYubbox')}
                 </Button>
               </Link>
             </div>
@@ -157,7 +160,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchQuery, setSearchQuery }
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-colors"
             >
-              <span className="font-medium">Home</span>
+              <span className="font-medium">{t('header.home')}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
             {session ? (
@@ -176,7 +179,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchQuery, setSearchQuery }
                   className="flex items-center justify-between p-3 rounded-xl transition-colors"
                   style={{ background: 'rgba(121,14,97,0.06)', border: '1px solid rgba(121,14,97,0.12)' }}
                 >
-                  <span className="font-medium" style={{ color: '#790e61' }}>New Yubbox</span>
+                  <span className="font-medium" style={{ color: '#790e61' }}>{t('header.newYubbox')}</span>
                   <Plus className="w-4 h-4" style={{ color: '#790e61' }} />
                 </Link>
               </>
@@ -204,7 +207,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchQuery, setSearchQuery }
           </div>
           
           <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-            <span className="text-sm text-gray-500">Language</span>
+            <span className="text-sm text-gray-500">{t('header.language')}</span>
             <LanguageSwitcher />
           </div>
         </div>

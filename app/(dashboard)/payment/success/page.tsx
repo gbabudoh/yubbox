@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -10,7 +10,7 @@ import Logo from '@/components/Logo';
 import Footer from '@/components/Footer';
 import { useI18n } from '@/lib/i18n-context';
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -169,5 +169,13 @@ export default function PaymentSuccessPage() {
 
       <Footer variant="simple" />
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -8,7 +9,7 @@ import Logo from '@/components/Logo';
 import Footer from '@/components/Footer';
 import { useI18n } from '@/lib/i18n-context';
 
-export default function PaymentCancelPage() {
+function PaymentCancelContent() {
   const searchParams = useSearchParams();
   const { t } = useI18n();
   const adId = searchParams.get('adId');
@@ -67,5 +68,13 @@ export default function PaymentCancelPage() {
 
       <Footer variant="simple" />
     </div>
+  );
+}
+
+export default function PaymentCancelPage() {
+  return (
+    <Suspense>
+      <PaymentCancelContent />
+    </Suspense>
   );
 }

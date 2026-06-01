@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { recomputeAdVisibilityScore } from '@/lib/algorithms/visibility';
 
 export async function POST(
   request: NextRequest,
@@ -13,11 +14,12 @@ export async function POST(
       data: { yubboxCount: { increment: 1 } },
     });
 
+    // Fire-and-forget — don't block the vote response
+    recomputeAdVisibilityScore(adId).catch(() => null);
+
     return NextResponse.json({
       success: true,
-      data: {
-        yubboxCount: ad.yubboxCount,
-      },
+      data: { yubboxCount: ad.yubboxCount },
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to vote';

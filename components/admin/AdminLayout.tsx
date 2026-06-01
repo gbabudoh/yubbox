@@ -77,7 +77,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { href: '/admin/payments', label: 'Payments', icon: '💳' },
     { href: '/admin/product-categories', label: 'Product Categories', icon: '📦' },
     { href: '/admin/service-categories', label: 'Service Categories', icon: '🔧' },
-    { href: '/admin/industries', label: 'Industries', icon: '🏢' },
+    { href: '/admin/industries',    label: 'Industries',    icon: '🏢' },
+    { href: '/admin/social-links',  label: 'Social Links',  icon: '🔗' },
   ];
 
   return (

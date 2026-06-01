@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useI18n } from '@/lib/i18n-context';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, Plus } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import AdCard from '@/components/AdCard';
+import AiSearchWidget from '@/components/AiSearchWidget';
 import Header from '@/components/Header';
 import BannerAdDisplay from '@/components/BannerAdDisplay';
 import Footer from '@/components/Footer';
@@ -32,8 +34,11 @@ interface Category {
 //   slug: string;
 // }
 
-export default function Home() {
-  // const { t } = useI18n();
+function HomeContent() {
+  const { t } = useI18n();
+  const router       = useRouter();
+  const pathname     = usePathname();
+  const searchParams = useSearchParams();
   const [ads, setAds] = useState<IAd[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,15 +47,26 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const searchParams = useSearchParams();
-  
-  // Set initial type from query params
+  const [aiFilteredIds, setAiFilteredIds] = useState<string[] | null>(null);
+
+  // Sync type and country from URL params
   useEffect(() => {
-    const typeParam = searchParams.get('type');
+    const typeParam    = searchParams.get('type');
+    const countryParam = searchParams.get('country');
     if (typeParam === 'product' || typeParam === 'service' || typeParam === 'trending') {
       setSelectedType(typeParam as 'product' | 'service' | 'trending');
+    } else {
+      setSelectedType(null);
     }
+    setSelectedCountry(countryParam);
   }, [searchParams]);
+
+  const handleCountryChange = useCallback((code: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (code) params.set('country', code);
+    else params.delete('country');
+    router.push(`${pathname}?${params.toString()}`);
+  }, [searchParams, router, pathname]);
   
   // Fetch ads
   const fetchAds = useCallback(async () => {
@@ -96,6 +112,9 @@ export default function Home() {
 
   const filteredAds = ads
     .filter((ad) => {
+      // AI filter — when AI returns results, show only those IDs
+      if (aiFilteredIds !== null) return aiFilteredIds.includes(ad.id);
+
       // Search Query
       if (searchQuery) {
         const matchesSearch = 
@@ -165,6 +184,11 @@ export default function Home() {
           <BannerAdDisplay />
         </div>
 
+        {/* AI Search */}
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 mb-4">
+          <AiSearchWidget onResults={(ids) => { setAiFilteredIds(ids); }} />
+        </div>
+
         {/* Filter Bar */}
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 mb-8">
            <FilterBar
@@ -174,7 +198,7 @@ export default function Home() {
              categories={categories}
              onTypeChange={setSelectedType}
              onCategoryChange={setSelectedCategory}
-             onCountryChange={setSelectedCountry}
+             onCountryChange={handleCountryChange}
            />
         </div>
 
@@ -184,22 +208,24 @@ export default function Home() {
             <div>
               <h2 className="text-xl font-black text-neutral-800">
                 {selectedType === 'trending'
-                  ? '🔥 Trending Yubboxes'
+                  ? t('feed.trendingYubboxes')
                   : selectedType === 'product'
-                  ? 'Product Yubboxes'
+                  ? t('feed.productYubboxes')
                   : selectedType === 'service'
-                  ? 'Service Yubboxes'
-                  : 'All Yubboxes'}
+                  ? t('feed.serviceYubboxes')
+                  : t('feed.allYubboxes')}
               </h2>
               {!isLoading && (
                 <p className="text-sm text-neutral-400 mt-0.5">
-                  {filteredAds.length} {filteredAds.length === 1 ? 'Yubbox' : 'Yubboxes'} found
+                  {filteredAds.length === 1
+                    ? t('feed.found1', { count: filteredAds.length })
+                    : t('feed.found',  { count: filteredAds.length })}
                 </p>
               )}
             </div>
             {searchQuery && (
               <div className="text-sm font-medium text-neutral-400">
-                Results for &quot;{searchQuery}&quot;
+                {t('feed.searchResults', { query: searchQuery })}
               </div>
             )}
           </div>
@@ -269,12 +295,20 @@ export default function Home() {
             }}
           >
             <Plus className="w-5 h-5" />
-            <span className="hidden sm:inline">New Yubbox</span>
+            <span className="hidden sm:inline">{t('header.newYubbox')}</span>
           </motion.button>
         </Link>
       </div>
 
       <Footer />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense>
+      <HomeContent />
+    </Suspense>
   );
 }

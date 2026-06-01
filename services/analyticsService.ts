@@ -11,22 +11,21 @@ export const analyticsService = {
       ipAddress?: string;
       userAgent?: string;
       referrer?: string;
+      // Behavioural signals (Yubbox Brain)
+      sessionId?: string;
+      scrollDepth?: number;
+      timeOnAd?: number;
+      clickElement?: string;
+      deviceType?: string;
     }
   ): Promise<void> {
     try {
       await fetch(API_BASE_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          adId,
-          eventType,
-          ...metadata,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adId, eventType, ...metadata }),
       });
     } catch (error) {
-      // Silently fail analytics tracking
       console.error('Failed to track analytics:', error);
     }
   },

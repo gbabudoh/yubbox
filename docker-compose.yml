@@ -1,0 +1,20 @@
+services:
+  yubbox:
+    build: .
+    container_name: yubbox
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    environment:
+      - NODE_ENV=production
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - yubbox-net
+
+networks:
+  yubbox-net:
+    driver: bridge

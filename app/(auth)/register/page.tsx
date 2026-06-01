@@ -3,33 +3,30 @@
 import React, { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, ShieldCheck, Eye, EyeOff, Globe, TrendingUp, BarChart2, DollarSign, ArrowLeft } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { authService } from '@/services/authService';
+import Logo from '@/components/Logo';
 import Footer from '@/components/Footer';
-
-const VALUE_PROPS = [
-  { icon: Globe, text: 'Target customers in 150+ countries' },
-  { icon: DollarSign, text: 'List for just $1 — active for 14 days' },
-  { icon: TrendingUp, text: 'Appear in trending and category feeds' },
-  { icon: BarChart2, text: 'Track views and clicks with analytics' },
-];
 
 export default function RegisterPage() {
   const router = useRouter();
   const { t } = useI18n();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading,    setIsLoading]    = useState(false);
+  const [error,        setError]        = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [showConfirm,  setShowConfirm]  = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    name: '', email: '', password: '', confirmPassword: '',
   });
+
+  const VALUE_PROPS = [
+    { icon: Globe,      textKey: 'auth.valueProp1' },
+    { icon: DollarSign, textKey: 'auth.valueProp2' },
+    { icon: TrendingUp, textKey: 'auth.valueProp3' },
+    { icon: BarChart2,  textKey: 'auth.valueProp4' },
+  ] as const;
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -65,57 +62,63 @@ export default function RegisterPage() {
 
         {/* ── LEFT: Brand panel ─────────────────────────────────────────── */}
         <div
-          className="hidden lg:flex lg:w-[45%] xl:w-[40%] flex-col justify-center p-12 relative overflow-hidden"
+          className="hidden lg:flex lg:w-[45%] xl:w-[40%] flex-col justify-between p-12 relative overflow-hidden"
           style={{ background: 'linear-gradient(145deg, #5a0049 0%, #790e61 45%, #c41e8a 100%)' }}
         >
-          {/* Background decoration */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-white/5" />
             <div className="absolute bottom-0 -left-24 w-80 h-80 rounded-full bg-white/5" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-white/[0.03]" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-white/3" />
           </div>
 
-          {/* Main copy */}
+          <div />
+
           <div className="relative z-10 space-y-8">
             <div>
               <p className="text-white/60 text-sm font-semibold uppercase tracking-widest mb-3">
-                The Global Ad Platform
+                {t('auth.globalAdPlatform')}
               </p>
               <h2 className="text-4xl xl:text-5xl font-black text-white leading-tight">
-                Reach the world with your listing
+                {t('auth.reachWorld')}
               </h2>
             </div>
 
             <ul className="space-y-4">
-              {VALUE_PROPS.map(({ icon: Icon, text }) => (
-                <li key={text} className="flex items-center gap-3">
+              {VALUE_PROPS.map(({ icon: Icon, textKey }) => (
+                <li key={textKey} className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0">
                     <Icon className="w-4 h-4 text-white" />
                   </div>
-                  <span className="text-white/85 text-sm font-medium">{text}</span>
+                  <span className="text-white/85 text-sm font-medium">{t(textKey)}</span>
                 </li>
               ))}
             </ul>
           </div>
 
+          <div className="relative z-10 pt-4 border-t border-white/15">
+            <p className="text-white/50 text-xs font-medium">
+              {t('auth.alreadyHaveAccountPanel')}{' '}
+              <Link href="/login" className="text-white font-bold hover:underline">
+                {t('auth.signInArrow')}
+              </Link>
+            </p>
+          </div>
         </div>
 
         {/* ── RIGHT: Form ───────────────────────────────────────────────── */}
         <div className="flex-1 flex flex-col bg-gray-50/60 min-h-screen lg:min-h-0">
 
-          {/* Mobile top bar */}
           <div className="lg:hidden w-full text-center py-2 px-4 text-white text-sm font-medium"
             style={{ backgroundColor: 'var(--primary-btn)' }}>
-            List your products &amp; services for global reach
+            {t('auth.mobileTopBar')}
           </div>
 
-          {/* Back link */}
           <div className="px-6 pt-5 pb-0">
             <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-neutral-400 hover:text-neutral-700 transition-colors group">
               <div className="w-7 h-7 rounded-full bg-white border border-neutral-200 flex items-center justify-center group-hover:shadow-sm transition-all">
                 <ArrowLeft className="w-3.5 h-3.5" />
               </div>
-              <span>Back to Home</span>
+              <span>{t('auth.backToHome')}</span>
             </Link>
           </div>
 
@@ -126,23 +129,20 @@ export default function RegisterPage() {
               transition={{ duration: 0.4 }}
               className="w-full max-w-md"
             >
-              {/* Logo — always visible on form side */}
-              <div className="flex justify-center mb-6">
-                <Image src="/icon.png" alt="Yubbox" width={56} height={56} className="object-contain" />
+              <div className="flex justify-center mb-7">
+                <Logo height={72} width={72} disableLink />
               </div>
 
               <div className="mb-8 text-center">
-                <h1 className="text-3xl font-black text-neutral-900 mb-1">Create your account</h1>
+                <h1 className="text-3xl font-black text-neutral-900 mb-1">{t('auth.registerTitle')}</h1>
                 <p className="text-sm text-neutral-500">
-                  Already have an account?{' '}
+                  {t('auth.registerSubtitle')}{' '}
                   <Link href="/login" className="font-bold hover:underline transition-all" style={{ color: '#790e61' }}>
-                    Sign in
+                    {t('auth.signInLink')}
                   </Link>
                 </p>
-
               </div>
 
-              {/* Error */}
               {error && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
@@ -157,10 +157,9 @@ export default function RegisterPage() {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Full Name */}
                 <div>
                   <label htmlFor="name" className="block text-xs font-bold uppercase tracking-widest text-neutral-400 mb-1.5">
-                    Full Name
+                    {t('auth.fullNameLabel')}
                   </label>
                   <div className="relative group">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-[#790e61] transition-colors" />
@@ -169,15 +168,14 @@ export default function RegisterPage() {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full pl-11 pr-4 py-3 rounded-xl border border-neutral-200 bg-white focus:ring-4 focus:ring-[#790e61]/10 focus:border-[#790e61] transition-all outline-none text-sm text-neutral-800 placeholder-neutral-400"
-                      placeholder="Enter your full name"
+                      placeholder={t('auth.fullNamePlaceholder')}
                     />
                   </div>
                 </div>
 
-                {/* Email */}
                 <div>
                   <label htmlFor="email" className="block text-xs font-bold uppercase tracking-widest text-neutral-400 mb-1.5">
-                    Email Address
+                    {t('auth.emailLabel')}
                   </label>
                   <div className="relative group">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-[#790e61] transition-colors" />
@@ -191,43 +189,43 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                {/* Password */}
                 <div>
                   <label htmlFor="password" className="block text-xs font-bold uppercase tracking-widest text-neutral-400 mb-1.5">
-                    Password
+                    {t('auth.password')}
                   </label>
                   <div className="relative group">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-[#790e61] transition-colors" />
                     <input
-                      id="password" name="password" type={showPassword ? 'text' : 'password'}
+                      id="password" name="password"
+                      type={showPassword ? 'text' : 'password'}
                       autoComplete="new-password" required
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       className="w-full pl-11 pr-11 py-3 rounded-xl border border-neutral-200 bg-white focus:ring-4 focus:ring-[#790e61]/10 focus:border-[#790e61] transition-all outline-none text-sm text-neutral-800 placeholder-neutral-400"
-                      placeholder="Create a password"
+                      placeholder={t('auth.createPasswordPlaceholder')}
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors">
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  <p className="mt-1.5 text-xs text-neutral-400">Must be at least 6 characters</p>
+                  <p className="mt-1.5 text-xs text-neutral-400">{t('auth.passwordHint')}</p>
                 </div>
 
-                {/* Confirm Password */}
                 <div>
                   <label htmlFor="confirmPassword" className="block text-xs font-bold uppercase tracking-widest text-neutral-400 mb-1.5">
-                    Confirm Password
+                    {t('auth.confirmPassword')}
                   </label>
                   <div className="relative group">
                     <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-[#790e61] transition-colors" />
                     <input
-                      id="confirmPassword" name="confirmPassword" type={showConfirm ? 'text' : 'password'}
+                      id="confirmPassword" name="confirmPassword"
+                      type={showConfirm ? 'text' : 'password'}
                       autoComplete="new-password" required
                       value={formData.confirmPassword}
                       onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                       className="w-full pl-11 pr-11 py-3 rounded-xl border border-neutral-200 bg-white focus:ring-4 focus:ring-[#790e61]/10 focus:border-[#790e61] transition-all outline-none text-sm text-neutral-800 placeholder-neutral-400"
-                      placeholder="Confirm your password"
+                      placeholder={t('auth.confirmPasswordPlaceholder')}
                     />
                     <button type="button" onClick={() => setShowConfirm(!showConfirm)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors">
@@ -236,31 +234,28 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                {/* Submit */}
                 <button
                   type="submit"
                   disabled={isLoading}
                   className="w-full py-3.5 text-white font-bold text-sm rounded-xl transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2 shadow-lg"
                   style={{
                     background: 'linear-gradient(135deg, #790e61, #c41e8a)',
-                    boxShadow: '0 4px 20px rgba(121, 14, 97, 0.35)',
+                    boxShadow:  '0 4px 20px rgba(121, 14, 97, 0.35)',
                   }}
                 >
                   {isLoading ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Creating account...</span>
+                      <span>{t('auth.creatingAccount')}</span>
                     </>
-                  ) : (
-                    'Create Account'
-                  )}
+                  ) : t('auth.createAccount')}
                 </button>
 
                 <p className="text-center text-xs text-neutral-400 pt-1">
-                  By signing up, you agree to our{' '}
-                  <a href="#" className="font-bold hover:underline" style={{ color: '#790e61' }}>Terms</a>
-                  {' '}and{' '}
-                  <a href="#" className="font-bold hover:underline" style={{ color: '#790e61' }}>Privacy Policy</a>
+                  {t('auth.termsText')}{' '}
+                  <Link href="/terms" className="font-bold hover:underline" style={{ color: '#790e61' }}>{t('auth.termsLink')}</Link>
+                  {' '}{t('auth.andText')}{' '}
+                  <Link href="/privacy" className="font-bold hover:underline" style={{ color: '#790e61' }}>{t('auth.privacyLink')}</Link>
                 </p>
               </form>
             </motion.div>

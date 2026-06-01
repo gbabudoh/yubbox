@@ -3,11 +3,15 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/nextauth';
 import { prisma } from '@/lib/prisma';
 import { EventType } from '@prisma/client';
+import { recomputeAdVisibilityScore } from '@/lib/algorithms/visibility';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { adId, eventType, country, ipAddress, userAgent, referrer } = body;
+    const {
+      adId, eventType, country, ipAddress, userAgent, referrer,
+      sessionId, scrollDepth, timeOnAd, clickElement, deviceType,
+    } = body;
 
     if (!adId || !eventType) {
       return NextResponse.json(
@@ -28,19 +32,29 @@ export async function POST(request: NextRequest) {
     // Get user session if available
     const session = await getServerSession(authOptions);
 
-    // Create analytics record
+    // Create analytics record with behavioural signals
     const analytics = await prisma.analytics.create({
       data: {
         adId,
-        eventType: eventType as EventType,
-        country: country || null,
-        ipAddress: ipAddress || null,
-        userAgent: userAgent || null,
-        referrer: referrer || null,
-        userId: session?.user?.id || null,
-        timestamp: new Date(),
+        eventType:   eventType as EventType,
+        country:     country      || null,
+        ipAddress:   ipAddress    || null,
+        userAgent:   userAgent    || null,
+        referrer:    referrer     || null,
+        userId:      session?.user?.id || null,
+        sessionId:   sessionId    || null,
+        scrollDepth: scrollDepth  ?? null,
+        timeOnAd:    timeOnAd     ?? null,
+        clickElement: clickElement || null,
+        deviceType:  deviceType   || null,
+        timestamp:   new Date(),
       },
     });
+
+    // Recompute visibility score asynchronously on every click (not view — too frequent)
+    if (eventType === 'click') {
+      recomputeAdVisibilityScore(adId).catch(() => null);
+    }
 
     return NextResponse.json({
       success: true,

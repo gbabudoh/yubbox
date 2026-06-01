@@ -1,117 +1,103 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Locale, defaultLocale, getLocale } from './i18n';
+import React, {
+  createContext, useContext, useState, useCallback, ReactNode,
+} from 'react';
+import { useMessages, useLocale } from 'next-intl';
+import { setLocaleCookie } from '@/app/actions';
+import { Locale } from './i18n';
 
-type TranslationValue = string | { [key: string]: TranslationValue };
-type Translations = Record<string, TranslationValue>;
+// ── Static imports so webpack bundles all translations upfront ────────────────
+// This makes language switching truly synchronous — no async, no delay.
+import enMsg from '../messages/en.json';
+import esMsg from '../messages/es.json';
+import frMsg from '../messages/fr.json';
+import deMsg from '../messages/de.json';
+import arMsg from '../messages/ar.json';
+import jaMsg from '../messages/ja.json';
+import zhMsg from '../messages/zh.json';
+import ptMsg from '../messages/pt.json';
+
+type MsgValue = string | Record<string, unknown>;
+
+const ALL_MESSAGES: Record<Locale, Record<string, MsgValue>> = {
+  en: enMsg as Record<string, MsgValue>,
+  es: esMsg as Record<string, MsgValue>,
+  fr: frMsg as Record<string, MsgValue>,
+  de: deMsg as Record<string, MsgValue>,
+  ar: arMsg as Record<string, MsgValue>,
+  ja: jaMsg as Record<string, MsgValue>,
+  zh: zhMsg as Record<string, MsgValue>,
+  pt: ptMsg as Record<string, MsgValue>,
+};
 
 interface I18nContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
-  translations: Translations;
 }
 
-const I18nContext = createContext<I18nContextType | undefined>(undefined);
+const I18nContext = createContext<I18nContextType | null>(null);
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(defaultLocale);
-  const [translations, setTranslations] = useState<Translations>({});
+function I18nProviderInner({ children }: { children: ReactNode }) {
+  const serverMessages = useMessages() as Record<string, MsgValue>;
+  const serverLocale   = useLocale() as Locale;
 
-  useEffect(() => {
-    // Load locale from localStorage or use default
-    const savedLocale = localStorage.getItem('locale');
-    if (savedLocale) {
-      const validLocale = getLocale(savedLocale);
-      setLocaleState(validLocale);
-    }
-  }, []);
+  const [clientMessages, setClientMessages] = useState<Record<string, MsgValue> | null>(null);
+  const [clientLocale,   setClientLocale]   = useState<Locale | null>(null);
 
-  useEffect(() => {
-    // Load translations for current locale
-    const loadTranslations = async () => {
-      try {
-        let translations;
-        switch (locale) {
-          case 'es':
-            translations = (await import('@/messages/es.json')).default;
-            break;
-          case 'fr':
-            translations = (await import('@/messages/fr.json')).default;
-            break;
-          case 'de':
-            translations = (await import('@/messages/de.json')).default;
-            break;
-          case 'zh':
-            translations = (await import('@/messages/zh.json')).default;
-            break;
-          case 'ja':
-            translations = (await import('@/messages/ja.json')).default;
-            break;
-          case 'ar':
-            translations = (await import('@/messages/ar.json')).default;
-            break;
-          case 'pt':
-            translations = (await import('@/messages/pt.json')).default;
-            break;
-          default:
-            translations = (await import('@/messages/en.json')).default;
-        }
-        setTranslations(translations);
-      } catch (error) {
-        console.error('Failed to load translations:', error);
-        // Fallback to English if translation file doesn't exist
-        const fallback = (await import('@/messages/en.json')).default;
-        setTranslations(fallback);
-      }
-    };
-    loadTranslations();
-  }, [locale]);
+  const messages = clientMessages ?? serverMessages;
+  const locale   = clientLocale   ?? serverLocale;
 
-  const setLocale = (newLocale: Locale) => {
-    setLocaleState(newLocale);
-    localStorage.setItem('locale', newLocale);
-  };
+  const setLocale = useCallback((newLocale: Locale) => {
+    if (newLocale === (clientLocale ?? serverLocale)) return;
 
-  const t = (key: string, params?: Record<string, string | number>): string => {
+    // Synchronous state update — all useI18n() consumers re-render immediately
+    setClientMessages(ALL_MESSAGES[newLocale]);
+    setClientLocale(newLocale);
+
+    // Update <html> attributes immediately
+    document.documentElement.lang = newLocale;
+    document.documentElement.dir  = newLocale === 'ar' ? 'rtl' : 'ltr';
+
+    // Persist for SSR (fire-and-forget)
+    setLocaleCookie(newLocale).catch(() => null);
+  }, [clientLocale, serverLocale]);
+
+  const t = useCallback((key: string, params?: Record<string, string | number>): string => {
     const keys = key.split('.');
-    let value: TranslationValue | undefined = translations;
+    let value: MsgValue | undefined = messages;
 
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
-        value = (value as { [key: string]: TranslationValue })[k];
+        value = (value as Record<string, MsgValue>)[k];
       } else {
-        return key; // Return key if translation not found
+        return key;
       }
     }
 
-    if (typeof value !== 'string') {
-      return key;
-    }
+    if (typeof value !== 'string') return key;
 
-    // Replace parameters in translation string
     if (params) {
-      return value.replace(/\{\{(\w+)\}\}/g, (match: string, paramKey: string) => {
-        return params[paramKey]?.toString() || match;
-      });
+      return value.replace(/\{\{(\w+)\}\}/g, (_, p) => params[p]?.toString() ?? `{{${p}}}`);
     }
 
     return value;
-  };
+  }, [messages]);
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale, t, translations }}>
+    <I18nContext.Provider value={{ locale, setLocale, t }}>
       {children}
     </I18nContext.Provider>
   );
 }
 
-export function useI18n() {
-  const context = useContext(I18nContext);
-  if (!context) {
-    throw new Error('useI18n must be used within an I18nProvider');
-  }
-  return context;
+export function I18nProvider({ children }: { children: ReactNode }) {
+  return <I18nProviderInner>{children}</I18nProviderInner>;
 }
 
+export function useI18n(): I18nContextType {
+  const ctx = useContext(I18nContext);
+  if (!ctx) throw new Error('useI18n must be used within I18nProvider');
+  return ctx;
+}

@@ -13,10 +13,12 @@
     "create-sample-banners": "node scripts/createSampleBanners.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.100.1",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@stripe/stripe-js": "^8.4.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/nodemailer": "^8.0.0",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.23.26",
@@ -28,13 +30,15 @@
     "next-auth": "^4.24.13",
     "next-i18next": "^15.4.3",
     "next-intl": "^4.8.2",
+    "nodemailer": "^7.0.13",
     "pg": "^8.21.0",
     "prisma": "^7.8.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "recharts": "^3.4.1",
     "stripe": "^19.3.1",
-    "swiper": "^12.0.3"
+    "swiper": "^12.0.3",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -42,6 +46,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
     "tailwindcss": "^4",

@@ -38,24 +38,46 @@ enum ProductKind {
   physical
 }
 
+enum InsightType {
+  performance
+  timing
+  geo
+  spend
+  opportunity
+  alert
+}
+
+enum ListingType {
+  retail
+  wholesale
+  b2b
+}
+
 // ─────────────────────────────────────────
 // Models
 // ─────────────────────────────────────────
 
 model User {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(user)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String      @id @default(uuid()) @db.Uuid
+  name       String
+  email      String      @unique
+  password   String
+  role       Role        @default(user)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
-  ads       Ad[]
-  reviews   Review[]
-  payments  Payment[]
-  analytics Analytics[]
-  bannerAds BannerAd[]
+  credits    Int         @default(0)
+
+  ads              Ad[]
+  reviews          Review[]
+  payments         Payment[]
+  analytics        Analytics[]
+  bannerAds        BannerAd[]
+  spendScore       SpendScore?
+  savedSearches    SavedSearch[]
+  pushSubscriptions PushSubscription[]
+  referralCode     ReferralCode?
+  referredByUsage  ReferralUsage?     @relation("ReferredByUsage")
 }
 
 model Category {
@@ -69,7 +91,8 @@ model Category {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  ads Ad[]
+  ads          Ad[]
+  savedSearches SavedSearch[]
 
   @@index([slug])
   @@index([type])
@@ -130,17 +153,21 @@ model Ad {
   expiryDate    DateTime
   topLensExpiry DateTime?
   storiesExpiry DateTime?
-  yubboxCount   Int       @default(0)
-  createdAt     DateTime  @default(now())
+  yubboxCount   Int         @default(0)
+  listingType   ListingType @default(retail)
+  // Visibility score — recomputed by the Auto-Visibility algorithm
+  visibilityScore Int       @default(0)
+  createdAt     DateTime    @default(now())
   updatedAt     DateTime  @updatedAt
 
   user     User     @relation(fields: [userId],     references: [id], onDelete: Cascade)
   category Category @relation(fields: [categoryId], references: [id])
   industry Industry @relation(fields: [industryId], references: [id])
 
-  reviews   Review[]
-  payments  Payment[]
-  analytics Analytics[]
+  reviews    Review[]
+  payments   Payment[]
+  analytics  Analytics[]
+  insights   AdInsight[]
 
   @@index([userId])
   @@index([isActive])
@@ -151,6 +178,8 @@ model Ad {
   @@index([topLensExpiry])
   @@index([storiesExpiry])
   @@index([yubboxCount(sort: Desc)])
+  @@index([visibilityScore(sort: Desc)])
+  @@index([listingType])
 }
 
 model Review {
@@ -163,25 +192,31 @@ model Review {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  ad   Ad    @relation(fields: [adId],    references: [id], onDelete: Cascade)
-  user User? @relation(fields: [userId],  references: [id], onDelete: SetNull)
+  ad   Ad    @relation(fields: [adId],   references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([adId])
   @@index([userId])
 }
 
 model Analytics {
-  id        String    @id @default(uuid()) @db.Uuid
-  adId      String    @db.Uuid
-  eventType EventType
-  country   String?
-  ipAddress String?
-  userAgent String?
-  referrer  String?
-  timestamp DateTime  @default(now())
-  userId    String?   @db.Uuid
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id           String    @id @default(uuid()) @db.Uuid
+  adId         String    @db.Uuid
+  eventType    EventType
+  country      String?
+  ipAddress    String?
+  userAgent    String?
+  referrer     String?
+  timestamp    DateTime  @default(now())
+  userId       String?   @db.Uuid
+  // ── Behavioural fields (Yubbox Brain / Click Behaviour algorithm) ──
+  sessionId    String?                   // groups events from the same browsing session
+  scrollDepth  Int?                      // 0–100 — how far down the ad was scrolled before action
+  timeOnAd     Int?                      // seconds spent viewing the ad before click/leave
+  clickElement String?                   // 'image' | 'title' | 'cta' | 'description' | 'company'
+  deviceType   String?                   // 'mobile' | 'desktop' | 'tablet'
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   ad   Ad    @relation(fields: [adId],   references: [id], onDelete: Cascade)
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -189,6 +224,7 @@ model Analytics {
   @@index([adId, eventType])
   @@index([adId, timestamp(sort: Desc)])
   @@index([adId, country])
+  @@index([sessionId])
 }
 
 model Payment {
@@ -234,4 +270,123 @@ model BannerAd {
   @@index([isActive])
   @@index([startDate, endDate])
   @@index([displayOrder])
+}
+
+// ── Yubbox Intelligence — Insight cards generated per ad ──────────────────────
+model AdInsight {
+  id        String      @id @default(uuid()) @db.Uuid
+  adId      String      @db.Uuid
+  type      InsightType
+  title     String      @db.VarChar(200)
+  body      String      @db.VarChar(600)
+  impact    String      @db.VarChar(10)   // 'high' | 'medium' | 'low'
+  priority  Int         @default(0)       // higher = shown first
+  data      Json?                         // structured payload for charts/sparklines
+  isRead    Boolean     @default(false)
+  expiresAt DateTime
+  createdAt DateTime    @default(now())
+
+  ad Ad @relation(fields: [adId], references: [id], onDelete: Cascade)
+
+  @@index([adId, priority(sort: Desc)])
+  @@index([expiresAt])
+}
+
+// ── Saved Searches + Push Notifications ──────────────────────────────────────
+model SavedSearch {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @db.Uuid
+  label      String?   @db.VarChar(100)
+  query      String?   @db.VarChar(200)
+  country    String?   @db.VarChar(10)
+  categoryId String?   @db.Uuid
+  createdAt  DateTime  @default(now())
+
+  user     User      @relation(fields: [userId],     references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([categoryId])
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  endpoint  String   @unique @db.VarChar(1000)
+  p256dh    String   @db.VarChar(200)
+  auth      String   @db.VarChar(100)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ── Referral Programme ────────────────────────────────────────────────────────
+model ReferralCode {
+  id        String          @id @default(uuid()) @db.Uuid
+  userId    String          @db.Uuid @unique
+  code      String          @unique @db.VarChar(20)
+  createdAt DateTime        @default(now())
+
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usages ReferralUsage[]
+
+  @@index([code])
+}
+
+model ReferralUsage {
+  id             String   @id @default(uuid()) @db.Uuid
+  referralCodeId String   @db.Uuid
+  referredUserId String   @db.Uuid @unique
+  createdAt      DateTime @default(now())
+
+  referralCode ReferralCode @relation(fields: [referralCodeId], references: [id])
+  referredUser User         @relation("ReferredByUsage", fields: [referredUserId], references: [id])
+
+  @@index([referralCodeId])
+}
+
+// ── Social Links — managed from admin dashboard ───────────────────────────────
+model SocialLink {
+  id        String   @id @default(uuid()) @db.Uuid
+  platform  String   @db.VarChar(50)   // e.g. 'x', 'instagram', 'linkedin', 'facebook'
+  label     String   @db.VarChar(50)   // Display name e.g. 'X', 'Instagram'
+  url       String   @db.VarChar(500)
+  symbol    String   @db.VarChar(20)   // Short glyph e.g. '𝕏', 'IG', 'in', 'f'
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, order])
+}
+
+// ── Password Reset Tokens ─────────────────────────────────────────────────────
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  token     String    @unique
+  email     String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+  @@index([email])
+}
+
+// ── Yubbox Spend Score — per-user efficiency rating ───────────────────────────
+model SpendScore {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @db.Uuid @unique
+  score           Int      @default(0)     // 0–100
+  viewsPerDollar  Decimal  @default(0) @db.Decimal(10, 4)
+  clicksPerDollar Decimal  @default(0) @db.Decimal(10, 4)
+  engagementRate  Decimal  @default(0) @db.Decimal(10, 4)
+  categoryRank    Int      @default(0)     // percentile rank within category (0–100)
+  breakdown       Json                     // factor-level breakdown for UI
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
